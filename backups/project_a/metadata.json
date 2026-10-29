@@ -1,0 +1,6 @@
+{
+  "name": "Virasat Quest - Heritage Knowledge Graph",
+  "description": "Digital revitalization of cultural and architectural heritage archives with an interactive, evidence-based Heritage Knowledge Graph.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
