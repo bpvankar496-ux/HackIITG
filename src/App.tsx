@@ -14,6 +14,8 @@ import { ArchiveExplorerView } from './components/ArchiveExplorerView';
 import { DocumentUploadView } from './components/DocumentUploadView';
 import { ResearchAssistantView } from './components/ResearchAssistantView';
 import { HeritageMapView } from './components/HeritageMapView';
+import { GamesView } from './components/GamesView';
+import { motion, useReducedMotion } from 'motion/react';
 import { CollectionView } from './components/CollectionView';
 import { HeritageDetailView } from './components/HeritageDetailView';
 import { AdminImportView } from './components/AdminImportView';
@@ -75,6 +77,7 @@ function VirasatQuestApp() {
           'explorer',
           'assistant',
           'map',
+          'games',
           'upload',
           'collection',
           'login',
@@ -110,6 +113,8 @@ function VirasatQuestApp() {
   };
 
   const isDetailView = window.location.hash.startsWith('#heritage/');
+  const reduceMotion = useReducedMotion();
+  const pageKey = isDetailView ? `detail-${activeSiteSlug}` : currentSection;
 
   return (
     <div className="min-h-screen bg-[#F8F5EF] text-[#292821] flex flex-col font-sans">
@@ -121,7 +126,13 @@ function VirasatQuestApp() {
       />
 
       {/* Main Routed Content Area */}
-      <main className="flex-1">
+      <motion.main
+        key={pageKey}
+        className="flex-1"
+        initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      >
         {/* Detail view takes precedence when hash matches #heritage/:slug */}
         {isDetailView ? (
           <HeritageDetailView
@@ -187,6 +198,9 @@ function VirasatQuestApp() {
               />
             )}
 
+            {/* Games: heritage quiz and Simon */}
+            {currentSection === 'games' && <GamesView />}
+
             {/* Section 7: Document Intake & Multi-Modal OCR */}
             {currentSection === 'upload' && (
               <DocumentUploadView
@@ -229,7 +243,7 @@ function VirasatQuestApp() {
             {currentSection === 'dossier' && <ProjectDossier />}
           </>
         )}
-      </main>
+      </motion.main>
 
       {/* Editorial Footer */}
       <Footer onNavigate={(sec) => navigateTo(sec)} />

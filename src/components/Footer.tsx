@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Compass, ExternalLink, Github, ShieldCheck, Landmark, BookOpen, Network, MapPin, Sparkles, Upload, Bookmark, Info } from 'lucide-react';
+import { Compass, ExternalLink, Github, ShieldCheck, Landmark, BookOpen, Network, MapPin, Sparkles, Upload, Bookmark, Info, Gamepad2 } from 'lucide-react';
 import { NavSection } from './Header';
 
 interface FooterProps {
@@ -89,6 +89,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 >
                   <MapPin className="w-3.5 h-3.5 text-[#B65F43]" />
                   <span>Heritage Map</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.('games')}
+                  className="hover:text-[#B65F43] transition-colors text-left flex items-center gap-1.5"
+                >
+                  <Gamepad2 className="w-3.5 h-3.5 text-[#B65F43]" />
+                  <span>Heritage Games</span>
                 </button>
               </li>
               <li>

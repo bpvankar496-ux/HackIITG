@@ -23,6 +23,7 @@ import {
   X,
   ChevronDown,
   Landmark,
+  Gamepad2,
 } from 'lucide-react';
 
 export type NavSection =
@@ -32,6 +33,7 @@ export type NavSection =
   | 'explorer'
   | 'assistant'
   | 'map'
+  | 'games'
   | 'upload'
   | 'collection'
   | 'login'
@@ -73,6 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'explorer', label: 'Archival Vault', icon: <BookOpen className="h-4 w-4" /> },
     { id: 'assistant', label: 'AI Research', icon: <Sparkles className="h-4 w-4" /> },
     { id: 'map', label: 'Heritage Map', icon: <MapPin className="h-4 w-4" /> },
+    { id: 'games', label: 'Games', icon: <Gamepad2 className="h-4 w-4" /> },
   ];
 
   const handleNavClick = (section: NavSection) => {

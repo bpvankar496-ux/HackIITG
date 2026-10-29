@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { SEED_HERITAGE_SITES } from '../data/seedHeritageSites';
 import { SaveButton } from './SaveButton';
+const ModelViewer3D = React.lazy(() => import('./ModelViewer3D'));
+import { TiltCard } from './motion/TiltCard';
+import { Reveal } from './motion/Reveal';
 import { Network, MapPin, ExternalLink, ArrowLeft, ShieldCheck, Box, Image as ImageIcon, Award, Calendar, BookOpen, Layers, Compass } from 'lucide-react';
 
 interface HeritageDetailViewProps {
@@ -217,13 +220,16 @@ export const HeritageDetailView: React.FC<HeritageDetailViewProps> = ({
         {site.heritage_media && site.heritage_media.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {site.heritage_media.map(m => (
-              <figure key={m.id} className="bg-white rounded-xl border border-[#DCC9AD] overflow-hidden shadow-2xs">
+              <TiltCard key={m.id} className="rounded-xl">
+              <figure className="group bg-white rounded-xl border border-[#DCC9AD] overflow-hidden shadow-2xs">
+                <div className="overflow-hidden">
                 <img
                   src={m.url}
                   alt={m.alt}
                   loading="lazy"
-                  className="w-full aspect-16/10 object-cover"
+                  className="w-full aspect-16/10 object-cover transition-transform duration-700 group-hover:scale-110"
                 />
+                </div>
                 <figcaption className="p-3 text-[11px] text-[#777267] space-y-0.5">
                   <p className="font-medium text-[#292821]">{m.alt}</p>
                   <p>
@@ -241,6 +247,7 @@ export const HeritageDetailView: React.FC<HeritageDetailViewProps> = ({
                   </p>
                 </figcaption>
               </figure>
+              </TiltCard>
             ))}
           </div>
         ) : (
@@ -257,20 +264,9 @@ export const HeritageDetailView: React.FC<HeritageDetailViewProps> = ({
           <span>Spatial & 3D Architectural Model</span>
         </h2>
 
-        {site.model_url ? (
-          <div className="p-6 bg-white border border-[#DCC9AD] rounded-xl text-center space-y-2">
-            <p className="text-sm font-medium text-[#292821]">
-              Photogrammetric & spatial survey scan available for {site.name}.
-            </p>
-            <p className="text-xs text-[#777267]">
-              Model format: glTF/GLB • Subterranean staircase telemetry and stepped pavilion survey.
-            </p>
-          </div>
-        ) : (
-          <div className="p-6 border border-[#DCC9AD] rounded-xl bg-white text-xs text-[#777267] text-center">
-            A 3D photogrammetric elevation model is in preparation for this monument.
-          </div>
-        )}
+        <Suspense fallback={<div className="h-[340px] rounded-2xl border border-[#DCC9AD] bg-white flex items-center justify-center text-xs text-[#777267]">Loading 3D viewer…</div>}>
+          <ModelViewer3D category={site.category} name={site.name} modelUrl={site.model_url} />
+        </Suspense>
       </section>
 
       {/* Knowledge Graph Integration Callout */}

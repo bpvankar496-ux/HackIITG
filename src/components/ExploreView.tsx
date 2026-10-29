@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SEED_HERITAGE_SITES, HeritageSiteItem } from '../data/seedHeritageSites';
 import { VALID_HERITAGE_CATEGORIES } from '../utils/heritageDataImporter';
 import { Search, Map as MapIcon, List, Filter, ExternalLink, X, MapPin, Award, ShieldCheck, Compass, Sparkles } from 'lucide-react';
+import { TiltCard } from './motion/TiltCard';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -396,9 +397,9 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         /* List View */
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredSites.map(site => (
+            <TiltCard key={site.id} className="rounded-xl" intensity={5}>
             <article
-              key={site.id}
-              className="bg-white border border-[#DCC9AD] rounded-xl p-4 flex flex-col justify-between hover:border-[#B65F43] transition-all shadow-xs"
+              className="h-full bg-white border border-[#DCC9AD] rounded-xl p-4 flex flex-col justify-between hover:border-[#B65F43] hover:shadow-lg transition-all shadow-xs"
             >
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
@@ -468,6 +469,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
                 </button>
               </div>
             </article>
+            </TiltCard>
           ))}
         </div>
       )}

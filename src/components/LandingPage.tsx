@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { TiltCard } from './motion/TiltCard';
+import { Reveal } from './motion/Reveal';
 import React, { useMemo } from 'react';
 import {
   Compass,
@@ -122,7 +124,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* Right Column: Hero Visual Asset (Rani ki Vav Dossier Spotlight) */}
             <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md lg:max-w-none rounded-2xl border border-[#DCC9AD] bg-white p-3.5 shadow-md">
+              <TiltCard className="relative mx-auto max-w-md lg:max-w-none rounded-2xl" intensity={6}>
+              <div className="relative rounded-2xl border border-[#DCC9AD] bg-white p-3.5 shadow-xl">
                 <figure className="relative overflow-hidden rounded-xl bg-[#FAF7F0]">
                   <img
                     src="https://images.unsplash.com/photo-1600100397608-f010f443b77a?q=80&w=1200&auto=format&fit=crop"
@@ -175,6 +178,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </div>
                 </div>
               </div>
+              </TiltCard>
             </div>
           </div>
         </div>
@@ -363,9 +367,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {curatedMonuments.map((site) => (
+              <TiltCard key={site.id} className="rounded-2xl" intensity={5}>
               <article
-                key={site.id}
-                className="group bg-white rounded-2xl border border-[#DCC9AD] overflow-hidden flex flex-col justify-between shadow-2xs hover:border-[#B65F43] hover:shadow-md transition-all"
+                className="group h-full bg-white rounded-2xl border border-[#DCC9AD] overflow-hidden flex flex-col justify-between shadow-2xs hover:border-[#B65F43] hover:shadow-lg transition-all"
               >
                 <div>
                   {site.heritage_media && site.heritage_media[0] ? (
@@ -374,7 +378,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         src={site.heritage_media[0].url}
                         alt={site.name}
                         loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       {site.unescoStatus === 'World Heritage Site' && (
                         <div className="absolute top-2.5 left-2.5 rounded bg-amber-900/85 px-2 py-0.5 text-[9.5px] font-mono font-bold text-amber-200 backdrop-blur-xs flex items-center gap-1">
@@ -440,6 +444,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </button>
                 </div>
               </article>
+              </TiltCard>
             ))}
           </div>
         </div>
