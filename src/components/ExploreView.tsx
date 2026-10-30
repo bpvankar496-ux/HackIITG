@@ -3,6 +3,7 @@ import { SEED_HERITAGE_SITES, HeritageSiteItem } from '../data/seedHeritageSites
 import { VALID_HERITAGE_CATEGORIES } from '../utils/heritageDataImporter';
 import { Search, Map as MapIcon, List, Filter, ExternalLink, X, MapPin, Award, ShieldCheck, Compass, Sparkles } from 'lucide-react';
 import { TiltCard } from './motion/TiltCard';
+import { HeritageImage } from './HeritageImage';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -331,15 +332,12 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           {/* Active Site Bottom Drawer on Map */}
           {activeSite && (
             <div className="absolute bottom-4 left-4 right-4 z-20 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-[#DCC9AD] shadow-lg max-w-xl mx-auto flex items-start justify-between gap-4 animate-in slide-in-from-bottom duration-150">
-              {activeSite.heritage_media?.[0] && (
-                <img
-                  src={activeSite.heritage_media[0].url}
-                  alt={activeSite.heritage_media[0].alt}
-                  loading="lazy"
-                  onError={(event) => event.currentTarget.remove()}
-                  className="hidden h-24 w-28 shrink-0 rounded-lg object-cover sm:block"
-                />
-              )}
+              <HeritageImage
+                media={activeSite.heritage_media?.[0]}
+                siteName={activeSite.name}
+                category={activeSite.category}
+                className="hidden h-24 w-28 shrink-0 rounded-lg sm:block"
+              />
               <div className="space-y-1.5 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[10px] font-mono uppercase bg-[#B65F43]/15 text-[#B65F43] px-2 py-0.5 rounded font-bold">
@@ -411,17 +409,12 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               className="h-full bg-white border border-[#DCC9AD] rounded-xl p-4 flex flex-col justify-between hover:border-[#B65F43] hover:shadow-lg transition-all shadow-xs"
             >
               <div className="space-y-2">
-                {site.heritage_media?.[0] && (
-                  <div className="-mx-4 -mt-4 mb-3 aspect-[16/9] overflow-hidden rounded-t-xl bg-[#EDE5D5]">
-                    <img
-                      src={site.heritage_media[0].url}
-                      alt={site.heritage_media[0].alt}
-                      loading="lazy"
-                      onError={(event) => event.currentTarget.remove()}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
+                <HeritageImage
+                  media={site.heritage_media?.[0]}
+                  siteName={site.name}
+                  category={site.category}
+                  className="-mx-4 -mt-4 mb-3 aspect-[16/9] rounded-t-xl"
+                />
                 <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
                   <span className="font-mono text-[10px] uppercase bg-[#B65F43]/10 text-[#B65F43] px-2 py-0.5 rounded font-medium">
                     {site.category}

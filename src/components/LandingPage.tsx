@@ -5,7 +5,7 @@
 
 import { TiltCard } from './motion/TiltCard';
 import { Reveal } from './motion/Reveal';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   Compass,
   BookOpen,
@@ -20,10 +20,10 @@ import {
   Layers,
   ChevronRight,
   ExternalLink,
-  ImageOff,
 } from 'lucide-react';
 import { NavSection } from './Header';
 import { AUTHENTIC_HERITAGE_DATASET } from '../data/authenticHeritageDataset';
+import { HeritageImage } from './HeritageImage';
 
 interface LandingPageProps {
   onNavigate: (section: NavSection) => void;
@@ -36,7 +36,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onNavigateToSite,
   onNavigateToGraph,
 }) => {
-  const [heroImageFailed, setHeroImageFailed] = useState(false);
   // Curated showcase of verified heritage monuments from authentic dataset
   const curatedMonuments = useMemo(() => {
     const targetSlugs = [
@@ -138,34 +137,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <TiltCard className="relative mx-auto max-w-md lg:max-w-none rounded-2xl" intensity={6}>
               <div className="relative rounded-2xl border border-[#DCC9AD] bg-white p-3.5 shadow-xl">
                 <figure className="relative overflow-hidden rounded-xl bg-[#FAF7F0]">
-                  {heroImageFailed ? (
-                    <div className="aspect-16/11 w-full flex flex-col items-center justify-center gap-2 bg-[#EDE5D5] text-[#777267]" role="img" aria-label="Photograph of Rani ki Vav is unavailable">
-                      <ImageOff className="h-8 w-8" aria-hidden="true" />
-                      <span className="text-xs font-medium">Rani ki Vav, Patan</span>
-                    </div>
-                  ) : (
-                    <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Rani_ki_Vav_stepwell_15.jpg/960px-Rani_ki_Vav_stepwell_15.jpg"
-                      alt="Rani ki Vav subterranean stepped well in Patan, Gujarat"
-                      className="aspect-16/11 w-full object-cover transition-transform duration-500 hover:scale-102"
-                      loading="eager"
-                      onError={() => setHeroImageFailed(true)}
-                    />
-                  )}
+                  <HeritageImage
+                    media={AUTHENTIC_HERITAGE_DATASET.find((site) => site.slug === 'rani-ki-vav')?.heritage_media?.[0]}
+                    siteName="Rani ki Vav"
+                    category="Stepwell"
+                    loading="eager"
+                    className="aspect-16/11 w-full"
+                    imageClassName="transition-transform duration-500 hover:scale-102"
+                  />
                   <div className="absolute top-3 left-3 rounded-full bg-[#16192E]/85 px-3 py-1 text-[11px] font-mono font-medium text-white backdrop-blur-xs flex items-center gap-1.5">
                     <Award className="h-3 w-3 text-amber-400" />
                     <span>UNESCO World Heritage Site</span>
                   </div>
-                  {!heroImageFailed && (
-                    <a
-                      href="https://commons.wikimedia.org/wiki/File:Rani_ki_Vav_stepwell_15.jpg"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="absolute bottom-2 right-2 rounded bg-[#16192E]/80 px-2 py-1 text-[10px] text-white hover:bg-[#16192E]"
-                    >
-                      Photo: Darshanavenugopal / Wikimedia Commons (CC BY-SA 4.0)
-                    </a>
-                  )}
                 </figure>
 
                 <div className="p-4 space-y-2">
@@ -402,12 +385,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               >
                 <div>
                   {site.heritage_media && site.heritage_media[0] ? (
-                    <div className="relative overflow-hidden aspect-16/10 bg-[#FAF7F0]">
-                      <img
-                        src={site.heritage_media[0].url}
-                        alt={site.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    <div className="relative aspect-16/10 bg-[#FAF7F0]">
+                      <HeritageImage
+                        media={site.heritage_media[0]}
+                        siteName={site.name}
+                        category={site.category}
+                        className="h-full w-full"
+                        imageClassName="transition-transform duration-700 group-hover:scale-110"
                       />
                       {site.unescoStatus === 'World Heritage Site' && (
                         <div className="absolute top-2.5 left-2.5 rounded bg-amber-900/85 px-2 py-0.5 text-[9.5px] font-mono font-bold text-amber-200 backdrop-blur-xs flex items-center gap-1">

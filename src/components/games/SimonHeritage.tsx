@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'motion/react';
 import { Play, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { shuffle, siteImage, useSites } from './useHeritagePool';
+import { HeritageImage } from '../HeritageImage';
 
 type Phase = 'idle' | 'showing' | 'input' | 'over';
 
@@ -144,7 +145,14 @@ export const SimonHeritage: React.FC = () => {
               className="relative aspect-[4/3] overflow-hidden rounded-2xl border-2 bg-[#EADFCB] text-left shadow-sm disabled:cursor-default"
               style={{ borderColor: active ? ACCENTS[i] : '#DCC9AD', boxShadow: active ? `0 0 0 4px ${ACCENTS[i]}55, 0 10px 30px ${ACCENTS[i]}55` : undefined }}
             >
-              <img src={siteImage(s)} alt="" className="h-full w-full object-cover" style={{ filter: active ? 'none' : 'saturate(0.55) brightness(0.8)', transition: 'filter 150ms' }} />
+              <HeritageImage
+                media={s.heritage_media?.[0]}
+                siteName={s.name}
+                category={s.category}
+                className="absolute inset-0"
+                imageClassName={active ? '' : 'saturate-[.55] brightness-[.8]'}
+                showAttribution={false}
+              />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-3">
                 <span className="font-serif text-sm font-bold text-white sm:text-base">{s.name}</span>
               </div>

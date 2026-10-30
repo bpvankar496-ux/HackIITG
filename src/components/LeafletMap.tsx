@@ -7,6 +7,18 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { HeritageSite } from '../types';
 
+const escapeHtml = (value: unknown) =>
+  String(value ?? '').replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return entities[character];
+  });
+
 interface LeafletMapProps {
   sites: HeritageSite[];
   selectedSiteId?: string | null;
@@ -87,14 +99,14 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
 
       const popupContent = `
         <div style="font-family: inherit; max-width: 240px; padding: 4px;">
-          <h3 style="font-weight: 700; margin: 0 0 4px 0; font-size: 15px; color: #292821;">${site.name}</h3>
+          <h3 style="font-weight: 700; margin: 0 0 4px 0; font-size: 15px; color: #292821;">${escapeHtml(site.name)}</h3>
           <p style="margin: 0 0 6px 0; font-size: 12px; color: #777267;">
-            ${site.district ? site.district + ', ' : ''}${site.state} &bull; ${site.category}
+            ${escapeHtml(site.district ? `${site.district}, ` : '')}${escapeHtml(site.state)} &bull; ${escapeHtml(site.category)}
           </p>
           <div style="font-size: 11px; margin-bottom: 8px; color: #667653; font-weight: 600;">
             ${site.verification === 'verified' ? '✓ Verified Monument' : 'Community Archive'}
           </div>
-          <button id="view-site-${site.id}" style="
+          <button data-site-id="${escapeHtml(site.id)}" style="
             background: #B65F43;
             color: #fff;
             border: none;
@@ -109,7 +121,7 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
 
       marker.bindPopup(popupContent);
       marker.on('popupopen', () => {
-        const btn = document.getElementById(`view-site-${site.id}`);
+        const btn = marker.getPopup()?.getElement()?.querySelector<HTMLButtonElement>('[data-site-id]');
         if (btn) {
           btn.onclick = () => {
             onSelectSite(site);

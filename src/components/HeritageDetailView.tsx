@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { SEED_HERITAGE_SITES } from '../data/seedHeritageSites';
 import { SaveButton } from './SaveButton';
+import { HeritageImage } from './HeritageImage';
 const ModelViewer3D = React.lazy(() => import('./ModelViewer3D'));
 import { TiltCard } from './motion/TiltCard';
 import { Reveal } from './motion/Reveal';
@@ -222,14 +223,14 @@ export const HeritageDetailView: React.FC<HeritageDetailViewProps> = ({
             {site.heritage_media.map(m => (
               <TiltCard key={m.id} className="rounded-xl">
               <figure className="group bg-white rounded-xl border border-[#DCC9AD] overflow-hidden shadow-2xs">
-                <div className="overflow-hidden">
-                <img
-                  src={m.url}
-                  alt={m.alt}
-                  loading="lazy"
-                  className="w-full aspect-16/10 object-cover transition-transform duration-700 group-hover:scale-110"
+                <HeritageImage
+                  media={m}
+                  siteName={site.name}
+                  category={site.category}
+                  className="aspect-16/10 w-full"
+                  imageClassName="transition-transform duration-700 group-hover:scale-110"
+                  showAttribution={false}
                 />
-                </div>
                 <figcaption className="p-3 text-[11px] text-[#777267] space-y-0.5">
                   <p className="font-medium text-[#292821]">{m.alt}</p>
                   <p>

@@ -6,6 +6,7 @@
 import React from 'react';
 import { HeritageSite, ArchivalDocument } from '../types';
 import { X, Bookmark, BookmarkCheck, CheckCircle2, BookOpen, ExternalLink, ShieldCheck } from 'lucide-react';
+import { HeritageImage } from './HeritageImage';
 
 interface SiteDetailModalProps {
   site: HeritageSite | null;
@@ -44,10 +45,12 @@ export const SiteDetailModal: React.FC<SiteDetailModalProps> = ({
         {/* Hero Photo with Attribution */}
         {heroMedia && (
           <div className="overflow-hidden rounded-xl border border-[#DCC9AD]">
-            <img
-              src={heroMedia.url}
-              alt={heroMedia.alt}
-              className="aspect-[16/9] w-full object-cover"
+            <HeritageImage
+              media={heroMedia}
+              siteName={site.name}
+              category={site.category}
+              className="aspect-[16/9] w-full"
+              showAttribution={false}
             />
             <div className="flex flex-wrap items-center justify-between bg-stone-900/90 px-3 py-1.5 text-[11px] text-stone-300">
               <span>Photo: {heroMedia.photographer} &bull; {heroMedia.license}</span>

@@ -1,10 +1,13 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, Plugin } from 'vite';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 function virasatBackendPlugin(): Plugin {
   return {
@@ -59,7 +62,7 @@ export default defineConfig(() => {
     plugins: [react(), tailwindcss(), virasatBackendPlugin()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(projectRoot, '.'),
       },
     },
     server: {

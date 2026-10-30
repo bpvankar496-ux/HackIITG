@@ -4,8 +4,9 @@
  */
 
 import { HeritageSite } from '../types';
+import { getHeritageMedia } from './heritageImages';
 
-export const HERITAGE_SITES: HeritageSite[] = [
+const LEGACY_HERITAGE_SITES: HeritageSite[] = [
   {
     id: 'site-1',
     slug: 'rani-ki-vav',
@@ -291,3 +292,9 @@ export const HERITAGE_SITES: HeritageSite[] = [
     ],
   },
 ];
+
+/** Keep the older modal dataset aligned with the canonical image catalogue. */
+export const HERITAGE_SITES: HeritageSite[] = LEGACY_HERITAGE_SITES.map((site) => {
+  const media = getHeritageMedia(site.slug);
+  return media ? { ...site, media: [media] } : site;
+});

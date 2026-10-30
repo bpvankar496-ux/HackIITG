@@ -16,7 +16,7 @@ describe('Heritage Data Importer & Validation Engine', () => {
     assert.strictEqual(normalizeSiteSlug('Brihadisvara & Thanjavur'), 'brihadisvara-thanjavur');
   });
 
-  it('should validate all 38 authentic heritage records with zero errors', () => {
+  it('should validate every authentic heritage record with zero errors', () => {
     let validCount = 0;
     const allErrors: string[] = [];
 
@@ -32,6 +32,21 @@ describe('Heritage Data Importer & Validation Engine', () => {
     assert.strictEqual(allErrors.length, 0, `Validation errors found: ${allErrors.join('; ')}`);
     assert.strictEqual(validCount, AUTHENTIC_HERITAGE_DATASET.length);
     assert.ok(validCount >= 30, 'Dataset contains at least 30 authentic heritage records');
+  });
+
+  it('should attach one attributed Wikimedia image to every authentic heritage record', () => {
+    const mediaItems = AUTHENTIC_HERITAGE_DATASET.map((record) => record.heritage_media?.[0]);
+
+    assert.strictEqual(mediaItems.filter(Boolean).length, AUTHENTIC_HERITAGE_DATASET.length);
+    assert.strictEqual(new Set(mediaItems.map((item) => item?.source_url)).size, AUTHENTIC_HERITAGE_DATASET.length);
+
+    for (const media of mediaItems) {
+      assert.ok(media?.url.includes('commons.wikimedia.org/wiki/Special:FilePath/'));
+      assert.ok(media?.source_url.includes('commons.wikimedia.org/wiki/File:'));
+      assert.ok(media?.alt.trim());
+      assert.ok(media?.photographer.trim());
+      assert.ok(media?.license.trim());
+    }
   });
 
   it('should fail validation when required fields are missing', () => {

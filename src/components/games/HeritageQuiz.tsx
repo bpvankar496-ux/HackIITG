@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, XCircle, RotateCcw, Trophy, ArrowRight } from 'lucide-react';
 import { HeritageSiteItem } from '../../data/seedHeritageSites';
 import { shuffle, siteImage, useSites } from './useHeritagePool';
+import { HeritageImage } from '../HeritageImage';
 
 interface Question {
   id: string;
@@ -146,7 +147,13 @@ export const HeritageQuiz: React.FC = () => {
           className="overflow-hidden rounded-3xl border border-[#DCC9AD] bg-white shadow-md">
           {img && !q.id.endsWith('-who') && (
             <div className="relative h-48 overflow-hidden bg-[#EADFCB] sm:h-60">
-              <img src={img} alt="" className="h-full w-full object-cover" />
+              <HeritageImage
+                media={q.site.heritage_media?.[0]}
+                siteName={q.site.name}
+                category={q.site.category}
+                className="h-full w-full"
+                showAttribution={false}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
           )}

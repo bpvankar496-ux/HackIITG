@@ -159,24 +159,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
           {/* Standard Login Form */}
           {!isForgotPasswordMode ? (
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Curator Admin Quick-Fill Banner */}
-              <div className="p-2.5 bg-[#FAF7F0] border border-[#DCC9AD] rounded-xl flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-semibold text-[#292821] block">Curator / Admin Account</span>
-                  <span className="text-[11px] font-mono text-[#777267]">admin@gmail.com</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@gmail.com');
-                    setPassword('28102026');
-                  }}
-                  className="px-2.5 py-1 bg-white border border-[#DCC9AD] hover:border-[#B65F43] hover:text-[#B65F43] rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
-                >
-                  Fill Credentials
-                </button>
-              </div>
-
               {/* Email Address */}
               <div>
                 <label

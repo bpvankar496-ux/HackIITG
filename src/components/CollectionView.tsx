@@ -8,6 +8,7 @@ import { SEED_HERITAGE_SITES } from '../data/seedHeritageSites';
 import { useAuth } from '../contexts/AuthContext';
 import { readSaved, toggleSaved, SAVED_EVENT } from '../lib/savedSites';
 import { Bookmark, Trash2, ExternalLink, MapPin, Landmark } from 'lucide-react';
+import { HeritageImage } from './HeritageImage';
 
 interface CollectionViewProps {
   onNavigateToSite: (slug: string) => void;
@@ -89,17 +90,12 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
               className="bg-white border border-[#DCC9AD] rounded-xl p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#B65F43] transition-all"
             >
               <div>
-                {site.heritage_media?.[0] && (
-                  <div className="-mx-4 -mt-4 mb-3 aspect-[16/9] overflow-hidden rounded-t-xl bg-[#EDE5D5]">
-                    <img
-                      src={site.heritage_media[0].url}
-                      alt={site.heritage_media[0].alt}
-                      loading="lazy"
-                      onError={(event) => event.currentTarget.remove()}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
+                <HeritageImage
+                  media={site.heritage_media?.[0]}
+                  siteName={site.name}
+                  category={site.category}
+                  className="-mx-4 -mt-4 mb-3 aspect-[16/9] rounded-t-xl"
+                />
                 <div className="flex items-center justify-between text-xs text-[#777267]">
                   <span className="font-mono text-[10px] uppercase bg-[#B65F43]/10 text-[#B65F43] px-2 py-0.5 rounded font-medium">
                     {site.category}

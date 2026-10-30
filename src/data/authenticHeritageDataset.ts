@@ -1,4 +1,5 @@
 import { HeritageSiteItem } from '../types/heritage';
+import { getHeritageMedia } from './heritageImages';
 
 /**
  * Authentic, verified Indian heritage dataset for Virasat Quest (Step 10).
@@ -7,7 +8,7 @@ import { HeritageSiteItem } from '../types/heritage';
  * - Archaeological Survey of India (ASI) monographs & notifications
  * - Epigraphia Indica & State Archaeology Directorates
  */
-export const AUTHENTIC_HERITAGE_DATASET: HeritageSiteItem[] = [
+const AUTHENTIC_HERITAGE_RECORDS: HeritageSiteItem[] = [
   // --- GUJARAT SITES ---
   {
     id: 'site-rkv',
@@ -1362,3 +1363,11 @@ export const AUTHENTIC_HERITAGE_DATASET: HeritageSiteItem[] = [
     status: 'approved'
   }
 ];
+
+/** Every public record receives its verified, attributed catalogue image. */
+export const AUTHENTIC_HERITAGE_DATASET: HeritageSiteItem[] = AUTHENTIC_HERITAGE_RECORDS.map(
+  (site) => {
+    const media = getHeritageMedia(site.slug);
+    return media ? { ...site, heritage_media: [media] } : site;
+  },
+);

@@ -3,34 +3,46 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { readSaved, syncSavedOnLogin, SAVED_EVENT } from './lib/savedSites';
 import { Header, NavSection } from './components/Header';
 import { Footer } from './components/Footer';
-import { LandingPage } from './components/LandingPage';
-import { ExploreView } from './components/ExploreView';
-import { KnowledgeGraphView } from './components/knowledgeGraph/KnowledgeGraphView';
-import { ArchiveExplorerView } from './components/ArchiveExplorerView';
-import { DocumentUploadView } from './components/DocumentUploadView';
-import { ResearchAssistantView } from './components/ResearchAssistantView';
-import { HeritageMapView } from './components/HeritageMapView';
-import { GamesView } from './components/GamesView';
 import { motion, useReducedMotion } from 'motion/react';
-import { CollectionView } from './components/CollectionView';
-import { HeritageDetailView } from './components/HeritageDetailView';
-import { AdminImportView } from './components/AdminImportView';
-import { ProjectDossier } from './components/ProjectDossier';
-import { LoginView } from './components/auth/LoginView';
-import { SignUpView } from './components/auth/SignUpView';
 
-import { SEED_HERITAGE_ENTITIES, SEED_HERITAGE_RELATIONSHIPS } from './data/seedKnowledgeGraph';
+const LandingPage = React.lazy(() => import('./components/LandingPage'));
+const ExploreView = React.lazy(() => import('./components/ExploreView'));
+const KnowledgeGraphRoute = React.lazy(async () => ({
+  default: (await import('./components/KnowledgeGraphRoute')).KnowledgeGraphRoute,
+}));
+const ArchiveExplorerView = React.lazy(async () => ({
+  default: (await import('./components/ArchiveExplorerView')).ArchiveExplorerView,
+}));
+const DocumentUploadView = React.lazy(async () => ({
+  default: (await import('./components/DocumentUploadView')).DocumentUploadView,
+}));
+const ResearchAssistantView = React.lazy(async () => ({
+  default: (await import('./components/ResearchAssistantView')).ResearchAssistantView,
+}));
+const HeritageMapView = React.lazy(async () => ({
+  default: (await import('./components/HeritageMapView')).HeritageMapView,
+}));
+const GamesView = React.lazy(() => import('./components/GamesView'));
+const CollectionView = React.lazy(() => import('./components/CollectionView'));
+const HeritageDetailView = React.lazy(() => import('./components/HeritageDetailView'));
+const AdminImportView = React.lazy(() => import('./components/AdminImportView'));
+const ProjectDossier = React.lazy(async () => ({
+  default: (await import('./components/ProjectDossier')).ProjectDossier,
+}));
+const LoginView = React.lazy(() => import('./components/auth/LoginView'));
+const SignUpView = React.lazy(() => import('./components/auth/SignUpView'));
 
 function VirasatQuestApp() {
   const [currentSection, setCurrentSection] = useState<NavSection>('overview');
   const [activeSiteSlug, setActiveSiteSlug] = useState<string>('rani-ki-vav');
   const [graphTargetSlug, setGraphTargetSlug] = useState<string | undefined>(undefined);
   const [savedCount, setSavedCount] = useState<number>(0);
+  const [routeHash, setRouteHash] = useState(() => window.location.hash);
 
   // Sync saved passport items count from localStorage
   const { user } = useAuth();
@@ -50,6 +62,7 @@ function VirasatQuestApp() {
   // Handle URL hash changes for deep linking and browser history navigation
   useEffect(() => {
     const handleHashChange = () => {
+      setRouteHash(window.location.hash);
       const hash = window.location.hash.replace(/^#\/?/, '');
       if (!hash || hash === 'home' || hash === 'overview') {
         setCurrentSection('overview');
@@ -110,7 +123,7 @@ function VirasatQuestApp() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const isDetailView = window.location.hash.startsWith('#heritage/');
+  const isDetailView = routeHash.startsWith('#heritage/');
   const reduceMotion = useReducedMotion();
   const pageKey = isDetailView ? `detail-${activeSiteSlug}` : currentSection;
 
@@ -131,18 +144,16 @@ function VirasatQuestApp() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Detail view takes precedence when hash matches #heritage/:slug */}
-        {isDetailView ? (
-          <HeritageDetailView
-            slug={activeSiteSlug}
-            onBack={() => {
-              window.location.hash = 'explore';
-              setCurrentSection('explore');
-            }}
-            onNavigateToGraph={(slug) => navigateTo('graph', slug)}
-          />
-        ) : (
-          <>
+        <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-[#777267]">Loading heritage archive…</div>}>
+          {/* Detail view takes precedence when hash matches #heritage/:slug */}
+          {isDetailView ? (
+            <HeritageDetailView
+              slug={activeSiteSlug}
+              onBack={() => navigateTo('explore')}
+              onNavigateToGraph={(slug) => navigateTo('graph', slug)}
+            />
+          ) : (
+            <>
             {/* Section 1: Overview / Professional Homepage */}
             {currentSection === 'overview' && (
               <LandingPage
@@ -161,9 +172,7 @@ function VirasatQuestApp() {
 
             {/* Section 3: Heritage Knowledge Graph */}
             {currentSection === 'graph' && (
-              <KnowledgeGraphView
-                initialEntities={SEED_HERITAGE_ENTITIES}
-                initialRelationships={SEED_HERITAGE_RELATIONSHIPS}
+              <KnowledgeGraphRoute
                 targetEntitySlug={graphTargetSlug}
                 onNavigateToSite={(slug) => navigateTo('heritage-detail', slug)}
               />
@@ -239,8 +248,9 @@ function VirasatQuestApp() {
 
             {/* Section 11: Project Technical Dossier */}
             {currentSection === 'dossier' && <ProjectDossier />}
-          </>
-        )}
+            </>
+          )}
+        </Suspense>
       </motion.main>
 
       {/* Editorial Footer */}

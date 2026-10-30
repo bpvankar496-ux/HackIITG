@@ -34,6 +34,18 @@ import {
 } from '../utils/heritageMap';
 import { DocumentDetailModal } from './DocumentDetailModal';
 
+const escapeHtml = (value: unknown) =>
+  String(value ?? '').replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return entities[character];
+  });
+
 interface HeritageMapViewProps {
   onNavigateToExplorer?: () => void;
   onNavigateToAssistant?: () => void;
@@ -207,7 +219,7 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
         count === 1 ? 'Record' : 'Records'
       }</span>
           </div>
-          <h3 class="font-serif text-base font-bold text-[#16192E] mt-0.5">${group.locationName}</h3>
+          <h3 class="font-serif text-base font-bold text-[#16192E] mt-0.5">${escapeHtml(group.locationName)}</h3>
         </div>
         <div class="space-y-2 max-h-[180px] overflow-y-auto">
           ${group.documents
@@ -215,14 +227,14 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
               (doc, i) => `
             <div class="p-2 rounded border border-[#E2D7C3]/80 bg-[#FDFCF9] text-xs">
               <span class="inline-block px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wider rounded bg-[#F4EFE6] text-[#6B6860] border border-[#E2D7C3]/60 mb-1">
-                ${doc.document_type.replace('_', ' ')} &bull; ${doc.historical_period || 'Period'}
+                ${escapeHtml(doc.document_type.replace('_', ' '))} &bull; ${escapeHtml(doc.historical_period || 'Period')}
               </span>
-              <h4 class="font-serif font-bold text-[#16192E] line-clamp-1">${doc.title}</h4>
+              <h4 class="font-serif font-bold text-[#16192E] line-clamp-1">${escapeHtml(doc.title)}</h4>
               <p class="text-[11px] text-[#6B6860] mt-0.5 line-clamp-2">${
-                doc.description || 'Verified archival document.'
+                escapeHtml(doc.description || 'Verified archival document.')
               }</p>
-              <button 
-                data-doc-id="${doc.id}" 
+              <button
+                data-doc-id="${escapeHtml(doc.id)}"
                 class="virasat-popup-inspect-btn mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#B38E46] hover:underline"
               >
                 Inspect Folio &rarr;
