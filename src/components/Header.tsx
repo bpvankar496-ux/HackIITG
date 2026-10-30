@@ -17,8 +17,6 @@ import {
   LogIn,
   UserPlus,
   Bookmark,
-  FileSpreadsheet,
-  Info,
   Menu,
   X,
   ChevronDown,
@@ -218,22 +216,6 @@ export const Header: React.FC<HeaderProps> = ({
                     )}
                   </button>
 
-                  <button
-                    onClick={() => handleNavClick('admin-import')}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[#292821] hover:bg-[#FAF7F0] transition-colors text-left"
-                  >
-                    <FileSpreadsheet className="h-3.5 w-3.5 text-[#667653]" />
-                    <span>Batch Data Intake</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavClick('dossier')}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[#292821] hover:bg-[#FAF7F0] transition-colors text-left"
-                  >
-                    <Info className="h-3.5 w-3.5 text-[#777267]" />
-                    <span>Project Technical Dossier</span>
-                  </button>
-
                   <div className="pt-1 border-t border-[#DCC9AD]/40">
                     <button
                       onClick={async () => {
@@ -324,14 +306,6 @@ export const Header: React.FC<HeaderProps> = ({
                   {savedCount}
                 </span>
               )}
-            </button>
-
-            <button
-              onClick={() => handleNavClick('dossier')}
-              className="w-full flex items-center gap-2 p-2.5 rounded-lg bg-[#FAF7F0] text-xs font-semibold text-[#777267]"
-            >
-              <Info className="h-4 w-4" />
-              <span>Project Technical Dossier</span>
             </button>
           </div>
 
