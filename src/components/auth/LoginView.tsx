@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { GoogleButton } from './GoogleButton';
 import {
   Compass,
   Lock,
@@ -24,12 +25,15 @@ interface LoginViewProps {
   onNavigateToSignUp: () => void;
   onNavigateToHome: () => void;
   onLoginSuccess?: () => void;
+  /** Shown when a visitor was sent here from a members-only page. */
+  notice?: string;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
   onNavigateToSignUp,
   onNavigateToHome,
   onLoginSuccess,
+  notice,
 }) => {
   const { signIn, resetPassword, isConfigured } = useAuth();
 
@@ -135,8 +139,15 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 <span>Supabase Configuration Notice</span>
               </div>
               <p className="text-[11px] leading-relaxed text-amber-800">
-                Supabase credentials are not set in the local environment. Public heritage archives and the knowledge graph remain fully accessible without logging in.
+                Supabase credentials are not set in the local environment, so accounts are disabled and the whole site stays open.
               </p>
+            </div>
+          )}
+
+          {notice && (
+            <div className="mb-5 p-3.5 bg-[#FAF7F0] border border-[#DCC9AD] rounded-xl text-xs text-[#292821] flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#B65F43] shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed">{notice}</div>
             </div>
           )}
 
@@ -154,6 +165,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>{successMessage}</span>
             </div>
+          )}
+
+          {/* Google sign-in */}
+          {!isForgotPasswordMode && isConfigured && (
+            <GoogleButton onError={setErrorMessage} />
           )}
 
           {/* Standard Login Form */}

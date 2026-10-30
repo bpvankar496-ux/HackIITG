@@ -45,7 +45,7 @@ function VirasatQuestApp() {
   const [routeHash, setRouteHash] = useState(() => window.location.hash);
 
   // Sync saved passport items count from localStorage
-  const { user } = useAuth();
+  const { user, loading: authLoading, isConfigured } = useAuth();
   const updateSavedCount = () => setSavedCount(readSaved().length);
 
   useEffect(() => {
@@ -57,6 +57,22 @@ function VirasatQuestApp() {
   // Signed-in users: merge this browser's saved list with their account
   useEffect(() => {
     if (user?.id) void syncSavedOnLogin(user.id);
+  }, [user?.id]);
+
+  // After a Google round trip, send the visitor back to the page they originally wanted
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const pending = sessionStorage.getItem('vq:redirect');
+      if (pending) {
+        sessionStorage.removeItem('vq:redirect');
+        window.location.hash = pending;
+      } else if (['#login', '#signup'].includes(window.location.hash)) {
+        window.location.hash = '';
+      }
+    } catch {
+      /* storage unavailable: stay put */
+    }
   }, [user?.id]);
 
   // Handle URL hash changes for deep linking and browser history navigation
@@ -127,6 +143,12 @@ function VirasatQuestApp() {
   const reduceMotion = useReducedMotion();
   const pageKey = isDetailView ? `detail-${activeSiteSlug}` : currentSection;
 
+  // Only the landing page and the login / signup screens are public.
+  // If Supabase isn't configured (local dev) accounts can't exist, so nothing is locked.
+  const isPublicSection =
+    !isDetailView && ['overview', 'login', 'signup'].includes(currentSection);
+  const isLocked = isConfigured && !user && !isPublicSection;
+
   return (
     <div className="min-h-screen page-grid text-[#292821] flex flex-col font-sans">
       {/* Primary Top Header & Navigation */}
@@ -145,8 +167,19 @@ function VirasatQuestApp() {
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
         <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-[#777267]">Loading heritage archive…</div>}>
-          {/* Detail view takes precedence when hash matches #heritage/:slug */}
-          {isDetailView ? (
+          {/* Members-only pages: show sign-in instead, and keep the URL so we return here after login */}
+          {isLocked && authLoading ? (
+            <div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-[#777267]">
+              Checking your session…
+            </div>
+          ) : isLocked ? (
+            <LoginView
+              notice="Please sign in or create a free account to continue. You'll land right back on the page you picked."
+              onNavigateToSignUp={() => navigateTo('signup')}
+              onNavigateToHome={() => navigateTo('overview')}
+              onLoginSuccess={() => {}}
+            />
+          ) : isDetailView ? (
             <HeritageDetailView
               slug={activeSiteSlug}
               onBack={() => navigateTo('explore')}

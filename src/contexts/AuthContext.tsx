@@ -20,6 +20,7 @@ export interface AuthContextType {
   ) => Promise<{ error?: string; confirmationRequired?: boolean }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string; message?: string }>;
+  signInWithGoogle: () => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
   signUp: async () => ({ error: 'Auth not initialized' }),
   signOut: async () => {},
   resetPassword: async () => ({ error: 'Auth not initialized' }),
+  signInWithGoogle: async () => ({ error: 'Auth not initialized' }),
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -179,6 +181,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithGoogle = async (): Promise<{ error?: string }> => {
+    if (!isSupabaseConfigured) {
+      return { error: 'Authentication is not configured. Supabase credentials are missing.' };
+    }
+    try {
+      // Remember where the visitor wanted to go; App restores it after the Google round trip.
+      const hash = window.location.hash;
+      if (hash && hash !== '#login' && hash !== '#signup') {
+        sessionStorage.setItem('vq:redirect', hash);
+      }
+      const client = getSupabaseClient();
+      const { error } = await client.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/' },
+      });
+      if (error) return { error: error.message };
+      return {}; // browser is being redirected to Google
+    } catch (err: any) {
+      return { error: err?.message || 'Unable to start Google sign-in.' };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -190,6 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         signOut,
         resetPassword,
+        signInWithGoogle,
       }}
     >
       {children}

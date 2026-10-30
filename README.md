@@ -251,3 +251,11 @@ psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema_step5_search.
 
 - **Cultural Data & Provenance:** Published under the [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/) license.
 - **Archival Citations:** Primary archaeological monographs and epigraphical records are sourced from public domain collections of the Archaeological Survey of India (ASI), Epigraphia Indica, and UNESCO World Heritage nomination dossiers.
+
+## Access model & Google sign-in
+
+- Public: landing page, Log In, Sign Up. Every other page redirects to Log In until the visitor is signed in, then returns them to the page they picked. (If `VITE_SUPABASE_URL` is not set, accounts are disabled and nothing is locked.)
+- "Continue with Google" uses Supabase OAuth. One-time setup:
+  1. Google Cloud Console → APIs & Services → Credentials → create an OAuth client (Web). Authorized redirect URI: `https://<your-project>.supabase.co/auth/v1/callback`.
+  2. Supabase → Authentication → Providers → Google → enable, paste Client ID and Secret.
+  3. Supabase → Authentication → URL Configuration → Site URL `https://hackiitg.onrender.com`; add `https://hackiitg.onrender.com/**` and `http://localhost:3000/**` to Redirect URLs.

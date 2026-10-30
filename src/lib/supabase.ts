@@ -23,7 +23,8 @@ export function getSupabaseClient(): SupabaseClient {
   }
   if (!clientInstance) {
     clientInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: true, autoRefreshToken: true },
+      // PKCE keeps OAuth (Google) returns out of the URL hash, which this app uses for routing.
+      auth: { persistSession: true, autoRefreshToken: true, flowType: 'pkce' },
     });
   }
   return clientInstance;

@@ -77,11 +77,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </p>
 
               {/* Primary Call to Actions */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => onNavigate('explore')}
-                  className="flex items-center gap-2 rounded-xl bg-[#B65F43] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#9A4B32] hover:shadow-md cursor-pointer"
+                  className="flex items-center gap-2 rounded-xl bg-[#B65F43] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#9A4B32] hover:shadow-md cursor-pointer"
                 >
                   <Landmark className="h-4 w-4" />
                   <span>Explore Heritage Sites</span>
@@ -91,7 +91,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button
                   type="button"
                   onClick={() => onNavigateToSite('rani-ki-vav')}
-                  className="flex items-center gap-2 rounded-xl border border-[#DCC9AD] bg-white px-5 py-3.5 text-sm font-semibold text-[#292821] transition-colors hover:bg-[#FAF7F0] shadow-2xs cursor-pointer"
+                  className="flex items-center gap-2 rounded-xl border border-[#DCC9AD] bg-white px-4 py-3 text-sm font-semibold text-[#292821] transition-colors hover:bg-[#FAF7F0] shadow-2xs cursor-pointer"
                 >
                   <Compass className="h-4 w-4 text-[#B65F43]" />
                   <span>Virtual Tour</span>
@@ -100,7 +100,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button
                   type="button"
                   onClick={() => onNavigate('explorer')}
-                  className="flex items-center gap-2 rounded-xl border border-[#DCC9AD] bg-white px-5 py-3.5 text-sm font-semibold text-[#292821] transition-colors hover:bg-[#FAF7F0] shadow-2xs cursor-pointer"
+                  className="flex items-center gap-2 rounded-xl border border-[#DCC9AD] bg-white px-4 py-3 text-sm font-semibold text-[#292821] transition-colors hover:bg-[#FAF7F0] shadow-2xs cursor-pointer"
                 >
                   <BookOpen className="h-4 w-4 text-[#B65F43]" />
                   <span>Archival Vault</span>
@@ -109,7 +109,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button
                   type="button"
                   onClick={() => onNavigate('assistant')}
-                  className="flex items-center gap-2 rounded-xl border border-[#667653]/40 bg-[#667653]/10 px-4 py-3.5 text-sm font-semibold text-[#667653] transition-colors hover:bg-[#667653]/20 cursor-pointer"
+                  className="flex items-center gap-2 rounded-xl border border-[#667653]/40 bg-[#667653]/10 px-4 py-3 text-sm font-semibold text-[#667653] transition-colors hover:bg-[#667653]/20 cursor-pointer"
                 >
                   <Sparkles className="h-4 w-4" />
                   <span>AI Research</span>

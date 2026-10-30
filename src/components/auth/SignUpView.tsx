@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { GoogleButton } from './GoogleButton';
 import {
   Compass,
   Lock,
@@ -131,7 +132,7 @@ export const SignUpView: React.FC<SignUpViewProps> = ({
                 <span>Supabase Configuration Notice</span>
               </div>
               <p className="text-[11px] leading-relaxed text-amber-800">
-                Supabase credentials are not set in the local environment. Public heritage archives and the knowledge graph remain fully accessible without registration.
+                Supabase credentials are not set in the local environment, so accounts are disabled and the whole site stays open.
               </p>
             </div>
           )}
@@ -164,7 +165,10 @@ export const SignUpView: React.FC<SignUpViewProps> = ({
             </div>
           )}
 
-          {/* Registration Form */}
+          {/* Google + Registration Form */}
+          {!successInfo && isConfigured && (
+            <GoogleButton label="Sign up with Google" onError={setErrorMessage} />
+          )}
           {!successInfo && (
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Full Name */}
