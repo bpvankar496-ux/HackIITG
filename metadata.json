@@ -1,0 +1,6 @@
+{
+  "name": "Virasat Quest",
+  "description": "Consolidated Digital Revitalisation of Indian Cultural & Architectural Heritage Archives with Interactive Knowledge Graph, Primary Document Vault, Multi-Modal Gemini OCR, Geospatial Heritage Maps, and Grounded AI Research.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
