@@ -87,3 +87,12 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Soft beige page with a faint grid, like graph paper */
+.page-grid {
+  background-color: #F4EFE8;
+  background-image:
+    linear-gradient(to right, rgba(190, 175, 150, 0.22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(190, 175, 150, 0.22) 1px, transparent 1px);
+  background-size: 70px 70px;
+}

@@ -304,7 +304,7 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-140px)] bg-[#FBF9F4]">
+    <div className="flex flex-col min-h-[calc(100vh-140px)]">
       {/* Top Controls & Heritage Scope Banner */}
       <div className="border-b border-[#E2D7C3] bg-white px-4 py-4 sm:px-6 shadow-sm">
         <div className="mx-auto max-w-7xl">

@@ -128,7 +128,7 @@ function VirasatQuestApp() {
   const pageKey = isDetailView ? `detail-${activeSiteSlug}` : currentSection;
 
   return (
-    <div className="min-h-screen bg-[#F8F5EF] text-[#292821] flex flex-col font-sans">
+    <div className="min-h-screen page-grid text-[#292821] flex flex-col font-sans">
       {/* Primary Top Header & Navigation */}
       <Header
         currentSection={currentSection}

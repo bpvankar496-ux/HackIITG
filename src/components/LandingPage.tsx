@@ -54,11 +54,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const totalSitesCount = AUTHENTIC_HERITAGE_DATASET.length;
 
   return (
-    <div className="bg-[#F8F5EF] text-[#292821]">
+    <div className="text-[#292821]">
       {/* ========================================================
           HERO SECTION
           ======================================================== */}
-      <section className="relative overflow-hidden border-b border-[#DCC9AD] bg-radial from-[#FAF7F0] via-[#F8F5EF] to-[#F3ECE1] py-14 lg:py-20">
+      <section className="relative overflow-hidden border-b border-[#DCC9AD] py-14 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
             {/* Left Column: Heading, Value Proposition & Actions */}
@@ -199,7 +199,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ========================================================
           CORE CAPABILITIES OVERVIEW
           ======================================================== */}
-      <section className="py-16 border-b border-[#DCC9AD] bg-white">
+      <section className="py-16 border-b border-[#DCC9AD]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 space-y-10">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#B65F43]">
@@ -352,7 +352,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ========================================================
           CURATED SHOWCASE OF REAL HERITAGE MONUMENTS
           ======================================================== */}
-      <section className="py-16 border-b border-[#DCC9AD] bg-[#FAF7F0]">
+      <section className="py-16 border-b border-[#DCC9AD]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#DCC9AD] pb-4">
             <div>
@@ -466,7 +466,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ========================================================
           KNOWLEDGE GRAPH SPOTLIGHT
           ======================================================== */}
-      <section className="py-16 border-b border-[#DCC9AD] bg-white">
+      <section className="py-16 border-b border-[#DCC9AD]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="rounded-2xl border border-[#DCC9AD] bg-[#FAF7F0] p-8 lg:p-10 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
