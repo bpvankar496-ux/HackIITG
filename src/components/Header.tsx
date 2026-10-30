@@ -69,7 +69,6 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const primaryNavItems: { id: NavSection; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview', label: 'Home', icon: <Compass className="h-4 w-4" /> },
     { id: 'explore', label: 'Explore', icon: <Landmark className="h-4 w-4" /> },
     { id: 'graph', label: 'Knowledge Graph', icon: <Network className="h-4 w-4" /> },
     { id: 'explorer', label: 'Archival Vault', icon: <BookOpen className="h-4 w-4" /> },
@@ -80,6 +79,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleNavClick = (section: NavSection) => {
     onNavigate(section);
+    setMobileMenuOpen(false);
+    setUserDropdownOpen(false);
+  };
+
+  const handleBrandClick = () => {
+    onNavigate('overview');
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
   };
@@ -97,23 +102,31 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-50 border-b border-[#DCC9AD] bg-[#F8F5EF]/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         {/* Brand Logo */}
-        <button
-          onClick={() => handleNavClick('overview')}
-          className="group flex items-center gap-3 text-left transition-opacity hover:opacity-90"
-          aria-label="Virasat Quest — Home"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#B65F43] text-white shadow-xs transition-transform group-hover:scale-105">
-            <Compass className="h-5 w-5 stroke-[1.8]" />
-          </div>
-          <div>
-            <span className="font-serif text-xl font-bold tracking-tight text-[#292821]">
-              Virasat Quest
+        <div className="flex items-center gap-3 text-left">
+          <button
+            type="button"
+            onClick={handleBrandClick}
+            className="group transition-opacity hover:opacity-90"
+            aria-label="Virasat Quest — Virtual Tour"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#B65F43] text-white shadow-xs transition-transform group-hover:scale-105">
+              <Compass className="h-5 w-5 stroke-[1.8]" />
             </span>
+          </button>
+          <div>
+            <button
+              type="button"
+              onClick={handleBrandClick}
+              className="block font-serif text-xl font-bold tracking-tight text-[#292821] transition-colors hover:text-[#B65F43]"
+              aria-label="Virasat Quest — Virtual Tour"
+            >
+              Virasat Quest
+            </button>
             <p className="text-[11px] text-[#777267] font-normal hidden sm:block">
               Cultural &amp; Architectural Heritage Archive
             </p>
           </div>
-        </button>
+        </div>
 
         {/* Primary Clean Desktop Navigation (6 prioritized items) */}
         <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">

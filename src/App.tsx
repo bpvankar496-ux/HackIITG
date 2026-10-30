@@ -119,7 +119,7 @@ function VirasatQuestApp() {
       {/* Primary Top Header & Navigation */}
       <Header
         currentSection={currentSection}
-        onNavigate={(sec) => navigateTo(sec)}
+        onNavigate={(section) => navigateTo(section)}
         savedCount={savedCount}
       />
 

@@ -41,11 +41,11 @@ export const AUTHENTIC_HERITAGE_DATASET: HeritageSiteItem[] = [
     heritage_media: [
       {
         id: 'med-rkv-1',
-        url: 'https://images.unsplash.com/photo-1600100397608-f010f443b77a?q=80&w=1200&auto=format&fit=crop',
+        url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Rani_ki_Vav_stepwell_15.jpg/960px-Rani_ki_Vav_stepwell_15.jpg',
         alt: 'Rani ki Vav subterranean terraces and pillared corridors in Patan',
-        photographer: 'Unsplash contributor',
-        license: 'Unsplash License',
-        source_url: 'https://images.unsplash.com/photo-1600100397608-f010f443b77a',
+        photographer: 'Darshanavenugopal',
+        license: 'CC BY-SA 4.0',
+        source_url: 'https://commons.wikimedia.org/wiki/File:Rani_ki_Vav_stepwell_15.jpg',
         is_hero: true
       }
     ]

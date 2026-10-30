@@ -5,7 +5,7 @@
 
 import { TiltCard } from './motion/TiltCard';
 import { Reveal } from './motion/Reveal';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Compass,
   BookOpen,
@@ -20,6 +20,7 @@ import {
   Layers,
   ChevronRight,
   ExternalLink,
+  ImageOff,
 } from 'lucide-react';
 import { NavSection } from './Header';
 import { AUTHENTIC_HERITAGE_DATASET } from '../data/authenticHeritageDataset';
@@ -35,6 +36,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onNavigateToSite,
   onNavigateToGraph,
 }) => {
+  const [heroImageFailed, setHeroImageFailed] = useState(false);
   // Curated showcase of verified heritage monuments from authentic dataset
   const curatedMonuments = useMemo(() => {
     const targetSlugs = [
@@ -89,6 +91,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                 <button
                   type="button"
+                  onClick={() => onNavigateToSite('rani-ki-vav')}
+                  className="flex items-center gap-2 rounded-xl border border-[#DCC9AD] bg-white px-5 py-3.5 text-sm font-semibold text-[#292821] transition-colors hover:bg-[#FAF7F0] shadow-2xs cursor-pointer"
+                >
+                  <Compass className="h-4 w-4 text-[#B65F43]" />
+                  <span>Virtual Tour</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => onNavigate('explorer')}
                   className="flex items-center gap-2 rounded-xl border border-[#DCC9AD] bg-white px-5 py-3.5 text-sm font-semibold text-[#292821] transition-colors hover:bg-[#FAF7F0] shadow-2xs cursor-pointer"
                 >
@@ -127,16 +138,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <TiltCard className="relative mx-auto max-w-md lg:max-w-none rounded-2xl" intensity={6}>
               <div className="relative rounded-2xl border border-[#DCC9AD] bg-white p-3.5 shadow-xl">
                 <figure className="relative overflow-hidden rounded-xl bg-[#FAF7F0]">
-                  <img
-                    src="https://images.unsplash.com/photo-1600100397608-f010f443b77a?q=80&w=1200&auto=format&fit=crop"
-                    alt="Rani ki Vav subterranean stepped well in Patan, Gujarat"
-                    className="aspect-16/11 w-full object-cover transition-transform duration-500 hover:scale-102"
-                    loading="eager"
-                  />
+                  {heroImageFailed ? (
+                    <div className="aspect-16/11 w-full flex flex-col items-center justify-center gap-2 bg-[#EDE5D5] text-[#777267]" role="img" aria-label="Photograph of Rani ki Vav is unavailable">
+                      <ImageOff className="h-8 w-8" aria-hidden="true" />
+                      <span className="text-xs font-medium">Rani ki Vav, Patan</span>
+                    </div>
+                  ) : (
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Rani_ki_Vav_stepwell_15.jpg/960px-Rani_ki_Vav_stepwell_15.jpg"
+                      alt="Rani ki Vav subterranean stepped well in Patan, Gujarat"
+                      className="aspect-16/11 w-full object-cover transition-transform duration-500 hover:scale-102"
+                      loading="eager"
+                      onError={() => setHeroImageFailed(true)}
+                    />
+                  )}
                   <div className="absolute top-3 left-3 rounded-full bg-[#16192E]/85 px-3 py-1 text-[11px] font-mono font-medium text-white backdrop-blur-xs flex items-center gap-1.5">
                     <Award className="h-3 w-3 text-amber-400" />
                     <span>UNESCO World Heritage Site</span>
                   </div>
+                  {!heroImageFailed && (
+                    <a
+                      href="https://commons.wikimedia.org/wiki/File:Rani_ki_Vav_stepwell_15.jpg"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="absolute bottom-2 right-2 rounded bg-[#16192E]/80 px-2 py-1 text-[10px] text-white hover:bg-[#16192E]"
+                    >
+                      Photo: Darshanavenugopal / Wikimedia Commons (CC BY-SA 4.0)
+                    </a>
+                  )}
                 </figure>
 
                 <div className="p-4 space-y-2">

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Compass, ExternalLink, Github, ShieldCheck, Landmark, BookOpen, Network, MapPin, Sparkles, Upload, Bookmark, Info, Gamepad2 } from 'lucide-react';
+import { Compass, ExternalLink, Github, ShieldCheck, Landmark, BookOpen, Network, MapPin, Sparkles, Upload, Bookmark, Gamepad2 } from 'lucide-react';
 import { NavSection } from './Header';
 
 interface FooterProps {
@@ -119,16 +119,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 >
                   <Bookmark className="w-3.5 h-3.5 text-[#B65F43]" />
                   <span>Saved Records</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.('dossier')}
-                  className="hover:text-[#B65F43] transition-colors text-left flex items-center gap-1.5"
-                >
-                  <Info className="w-3.5 h-3.5 text-[#777267]" />
-                  <span>Technical Dossier</span>
                 </button>
               </li>
             </ul>
