@@ -13,7 +13,7 @@
 ### Core Architectural Pillars
 
 1. **Interactive Heritage Knowledge Graph:** Visual, force-directed simulation network modeling multi-hop relationships across 7 heritage dimensions: Heritage Sites, Royal Patrons, Geographic Places, Historical Dynasties, Architectural Traditions, Documented Events, and Primary Source Charters.
-2. **Authentic Heritage Corpus:** 42 monuments across 14 Indian states with official UNESCO World Heritage and Archaeological Survey of India (ASI) citations, architectural style taxonomy (Māru-Gurjara, Nagara, Dravidian, Indo-Islamic, Kalinga, Nilachal), and high-resolution photography.
+2. **Authentic Heritage Corpus:** 42 monuments across 14 Indian states with official UNESCO World Heritage and Archaeological Survey of India (ASI) citations, architectural style taxonomy (Māru-Gurjara, Nagara, Dravidian, Indo-Islamic, Kalinga, Nilachal), and site-specific, attributed Wikimedia Commons photography.
 3. **Archival Vault & Deep Passage Search:** Full-text search engine querying historical documents and transcribed folios, extracting exact matching sentence snippets with XSS-safe text tokenization and multi-facet filtering.
 4. **Dual-Path Document Ingestion & Gemini Multi-Modal OCR:**
    - **Path A (Digital PDFs):** Fast, deterministic extraction of embedded font streams via `pdf-parse` (0.99 confidence).
@@ -21,6 +21,19 @@
 5. **Grounded AI Heritage Research Assistant:** Server-side RAG pipeline querying indexed folios with strict `[Citation X]` attribution, prompt injection resistance, and an anti-hallucination policy that refuses ungrounded claims.
 6. **Geospatial Heritage Map:** Interactive Leaflet cartography linking monuments to verified GPS coordinates, clustering proximate records, and displaying geolocated survey plates on OpenStreetMap tiles.
 7. **Researcher Authentication:** Dedicated Sign In, Sign Up, and Password Reset screens backed by Supabase Auth with persistent session state and private record bookmarking.
+
+### Heritage Image Reliability
+
+- A single image catalog maps every canonical site slug to one verified monument photograph, descriptive alt text, photographer, licence, and Commons source page.
+- Wikimedia `Special:FilePath` requests bound display images to a practical width while retaining source attribution.
+- Home, Explore, detail, collection, legacy modal, and game views share one image component. A failed remote image is replaced with a category-aware heritage fallback instead of a broken-image icon or collapsed card.
+- Image attribution is available on catalogue cards and in detail captions. See [`src/data/heritageImages.ts`](src/data/heritageImages.ts) for the complete catalog.
+
+### Performance and Route Handling
+
+- Main application sections are route-lazy-loaded with a loading fallback. The initial JavaScript bundle is approximately 369 kB minified; the optional 3D viewer stays in its own deferred chunk.
+- Hash-based detail routes are held in React state, so **Back to Heritage Archive** reliably returns from `#/heritage/:slug` to `#explore`.
+- Leaflet popup values are HTML-escaped before rendering, including uploaded document metadata.
 
 ---
 
@@ -47,6 +60,8 @@
 │   │   ├── LandingPage.tsx          # Clean 9-section homepage
 │   │   ├── ExploreView.tsx          # Searchable heritage monuments with state filters
 │   │   ├── HeritageDetailView.tsx   # Monument dossier view with 3D status & inscriptions
+│   │   ├── HeritageImage.tsx        # Attributed image renderer with resilient fallback
+│   │   ├── KnowledgeGraphRoute.tsx  # Lazy-loaded graph route and seed-data boundary
 │   │   ├── ArchiveExplorerView.tsx  # Deep passage search and document catalogue
 │   │   ├── DocumentUploadView.tsx   # Document upload form with drag-and-drop & metadata validation
 │   │   ├── DocumentDetailModal.tsx  # Page-by-page folio reader and signed URL generator
@@ -72,6 +87,7 @@
 │   │   └── AuthContext.tsx          # Supabase authentication session state provider
 │   ├── data/
 │   │   ├── authenticHeritageDataset.ts # Canonical 42-site heritage corpus
+│   │   ├── heritageImages.ts        # Verified Commons image catalog and attribution
 │   │   ├── seedHeritageSites.ts     # Seed heritage sites exporter
 │   │   ├── seedKnowledgeGraph.ts    # Seed graph entities and relationships
 │   │   └── archiveData.ts           # Archival document catalogue
@@ -151,8 +167,8 @@ Configure the following variables in `.env.local`:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/bpvankar496-ux/HackathonIITG.git
-cd HackathonIITG
+git clone https://github.com/bpvankar496-ux/HackIITG.git
+cd HackIITG
 
 # 2. Install dependencies
 npm install
@@ -176,13 +192,13 @@ npm run build   # builds the front end into dist/
 npm start       # serves dist/ and the /api routes from server.ts
 ```
 
-The `/api` routes (upload, OCR, assistant, search) need a host that runs Node, such as Render, Railway or Fly.io. A static-only host (plain Vercel or Netlify static hosting) serves the pages but cannot run them. All `/api` routes require a signed-in Supabase user.
+The `/api` routes (upload, OCR, assistant, search) need a host that runs Node, such as Render, Railway or Fly.io. A static-only host serves the pages but cannot run them. Public document, map, and search reads are available without authentication; uploads, OCR, signed URLs, and assistant requests require a signed-in Supabase user.
 
 ---
 
 ## 5. Automated Unit Tests
 
-The codebase includes 52 pure-logic unit tests executing via the native `node:test` runner. All tests run in complete isolation without external network dependencies:
+The codebase includes 53 pure-logic unit tests executing via the native `node:test` runner. All tests run in complete isolation without external network dependencies:
 
 ```bash
 # Execute all test suites
@@ -191,12 +207,22 @@ npx tsx --test src/utils/*.test.ts
 
 ### Test Coverage Highlights
 - **`graphLogic.test.ts` (7 tests):** Entity search, referential integrity filtering, 1-hop neighborhood calculation, duplicate extraction prevention, in-situ epigraph vs. AI confidence categorization, and zero orphaned edges verification.
-- **`heritageDataImporter.test.ts` (7 tests):** Slug normalization, schema validation of all 42 records, coordinate boundaries, and idempotent batch ingestion.
+- **`heritageDataImporter.test.ts` (8 tests):** Slug normalization, schema validation of all 42 records, image attribution and uniqueness checks, coordinate boundaries, and idempotent batch ingestion.
 - **`heritageLogic.test.ts` (4 tests):** Haversine GPS distance math, geofencing threshold verification, multi-token text filtering, and OCR passage chunking.
 - **`heritageMap.test.ts` (7 tests):** Coordinate boundaries, cardinal notation formatting, partition of mapped vs. unmapped records, co-located marker clustering, and geographic bounding boxes.
 - **`ocrPipeline.test.ts` (9 tests):** MIME routing, digital PDF vs. visual scan detection, Unicode sanitization, multilingual word counts, degraded scan review flags, and page segmentation.
 - **`researchAssistant.test.ts` (6 tests):** Inquiry length validation, prompt injection defense, bracket token extraction (`[Citation X]`), and grounded fallback synthesis.
 - **`uploadValidation.test.ts` (7 tests):** File size limits (20MB), MIME enforcement, metadata validation, coordinate range checks, and collision-resistant path generation.
+
+### Verification Commands
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+The production build emits a size warning for the optional Three.js 3D viewer chunk. It is loaded only when a visitor opens the 3D section of a heritage detail page.
 
 ---
 
