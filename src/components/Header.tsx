@@ -5,6 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import {
   Compass,
   BookOpen,
@@ -115,6 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={handleBrandClick}
               className="block whitespace-nowrap font-serif text-xl font-bold leading-tight tracking-tight text-[#292821] transition-colors hover:text-[#B65F43]"
+              translate="no"
               aria-label="Virasat Quest — Virtual Tour"
             >
               Virasat Quest
@@ -152,6 +154,8 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Action Controls: Deposit Folio & Auth Controls */}
         <div className="ml-auto flex shrink-0 items-center gap-2 xl:ml-0">
+          <LanguageSwitcher />
+
           {/* Quick Deposit Folio button */}
           {user && (
           <button

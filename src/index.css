@@ -130,3 +130,21 @@ body {
   font-size: 12px;
   font-weight: 700;
 }
+
+
+/* Google Translate: hide its default banner, tooltip and highlight */
+.goog-te-banner-frame,
+iframe.skiptranslate,
+.goog-te-balloon-frame,
+#goog-gt-tt,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+}
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+body {
+  top: 0 !important;
+}
