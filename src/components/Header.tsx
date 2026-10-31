@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={handleBrandClick}
             className="group transition-opacity hover:opacity-90"
-            aria-label="Virasat Quest — Virtual Tour"
+            aria-label="Virasat  — Virtual Tour"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#B65F43] text-white shadow-xs transition-transform group-hover:scale-105">
               <Compass className="h-5 w-5 stroke-[1.8]" />
@@ -117,9 +117,9 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={handleBrandClick}
               className="block whitespace-nowrap font-serif text-xl font-bold leading-tight tracking-tight text-[#292821] transition-colors hover:text-[#B65F43]"
               translate="no"
-              aria-label="Virasat Quest — Virtual Tour"
+              aria-label="Virasat  — Virtual Tour"
             >
-              Virasat Quest
+              Virasat 
             </button>
             <p className="hidden whitespace-nowrap text-[11px] font-normal leading-tight text-[#777267] min-[1700px]:block">
               Cultural &amp; Architectural Heritage Archive

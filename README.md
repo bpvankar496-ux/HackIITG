@@ -1,4 +1,4 @@
-# Virasat Quest
+# Virasat 
 
 > **Every place has a story. Every story deserves to live.**  
 > **Problem Statement:** *Digital Revitalisation of Unstructured Cultural & Architectural Heritage Archives*  
@@ -8,7 +8,7 @@
 
 ## 1. Project Overview
 
-**Virasat Quest** is a scholarly digital platform engineered for the revitalisation of unstructured cultural and architectural heritage archives. It transforms fragmented colonial-era survey monographs (such as Dr. James Burgess's *Architectural Surveys of Western India*), ancient Sanskrit stone epigraphs, Persian administrative charters, and unindexed archaeological field notes into a searchable, verified, and AI-grounded living knowledge platform.
+**Virasat ** is a scholarly digital platform engineered for the revitalisation of unstructured cultural and architectural heritage archives. It transforms fragmented colonial-era survey monographs (such as Dr. James Burgess's *Architectural Surveys of Western India*), ancient Sanskrit stone epigraphs, Persian administrative charters, and unindexed archaeological field notes into a searchable, verified, and AI-grounded living knowledge platform.
 
 ### Core Architectural Pillars
 

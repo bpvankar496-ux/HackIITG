@@ -59,7 +59,7 @@ export const ResearchAssistantView: React.FC<ResearchAssistantViewProps> = ({
       id: 'welcome-msg',
       role: 'assistant',
       content:
-        'Welcome to the **Virasat Quest Archival Research Assistant**. I am configured to assist historians, researchers, and students by retrieving and synthesizing primary source records indexed in this digital heritage repository.\n\nEvery answer is **strictly grounded** in verified document pages, manuscripts, and epigraphical charters. I do not fabricate historical claims or dates. When evidence is cited, you can click any source badge below to inspect the original high-resolution folio in the document reader.',
+        'Welcome to the **Virasat  Archival Research Assistant**. I am configured to assist historians, researchers, and students by retrieving and synthesizing primary source records indexed in this digital heritage repository.\n\nEvery answer is **strictly grounded** in verified document pages, manuscripts, and epigraphical charters. I do not fabricate historical claims or dates. When evidence is cited, you can click any source badge below to inspect the original high-resolution folio in the document reader.',
       timestamp: Date.now(),
       grounded: true,
       retrievedPassagesCount: 0,
@@ -232,7 +232,7 @@ export const ResearchAssistantView: React.FC<ResearchAssistantViewProps> = ({
         id: 'welcome-msg',
         role: 'assistant',
         content:
-          'Welcome to the **Virasat Quest Archival Research Assistant**. I am configured to assist historians, researchers, and students by retrieving and synthesizing primary source records indexed in this digital heritage repository.\n\nEvery answer is **strictly grounded** in verified document pages, manuscripts, and epigraphical charters. I do not fabricate historical claims or dates. When evidence is cited, you can click any source badge below to inspect the original high-resolution folio in the document reader.',
+          'Welcome to the **Virasat  Archival Research Assistant**. I am configured to assist historians, researchers, and students by retrieving and synthesizing primary source records indexed in this digital heritage repository.\n\nEvery answer is **strictly grounded** in verified document pages, manuscripts, and epigraphical charters. I do not fabricate historical claims or dates. When evidence is cited, you can click any source badge below to inspect the original high-resolution folio in the document reader.',
         timestamp: Date.now(),
         grounded: true,
         retrievedPassagesCount: 0,

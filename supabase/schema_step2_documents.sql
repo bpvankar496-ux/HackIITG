@@ -1,4 +1,4 @@
--- Virasat Quest: archival document metadata and the private storage bucket.
+-- Virasat : archival document metadata and the private storage bucket.
 -- Writes go through the server API with the service-role key, so no
 -- insert/update policies are granted to browser clients.
 

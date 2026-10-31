@@ -1,4 +1,4 @@
--- Virasat Quest: full-text passage search used by /api/archive/search.
+-- Virasat : full-text passage search used by /api/archive/search.
 -- Call shape matches src/server/searchRepository.ts.
 
 create index if not exists document_pages_fts_idx

@@ -88,7 +88,7 @@ export async function executeArchivalAssistantInquiry(
     const elapsed = Date.now() - startTime;
     return {
       ok: true,
-      answer: `The current archival records in the Virasat Quest repository do not contain documented evidence regarding "${cleanQuestion}".\n\nAs an AI research assistant committed to strict archival integrity, I do not extrapolate or introduce unsubstantiated claims. You may explore related folios in the Archive Explorer, upload primary documents, or adjust your historical inquiry terms.`,
+      answer: `The current archival records in the Virasat  repository do not contain documented evidence regarding "${cleanQuestion}".\n\nAs an AI research assistant committed to strict archival integrity, I do not extrapolate or introduce unsubstantiated claims. You may explore related folios in the Archive Explorer, upload primary documents, or adjust your historical inquiry terms.`,
       citations: [],
       retrievedPassagesCount: 0,
       grounded: false,

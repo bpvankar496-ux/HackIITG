@@ -88,7 +88,7 @@ export const SignUpView: React.FC<SignUpViewProps> = ({
       } else {
         setSuccessInfo({
           confirmationRequired: false,
-          message: 'Account created and verified! Welcome to Virasat Quest.',
+          message: 'Account created and verified! Welcome to Virasat .',
         });
         if (onSignUpSuccess) {
           onSignUpSuccess();
@@ -108,7 +108,7 @@ export const SignUpView: React.FC<SignUpViewProps> = ({
             type="button"
             onClick={onNavigateToHome}
             className="inline-flex items-center gap-2 transition-transform hover:scale-105"
-            aria-label="Virasat Quest Home"
+            aria-label="Virasat  Home"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#B65F43] text-white shadow-xs">
               <Compass className="h-6 w-6 stroke-[1.8]" />
@@ -340,7 +340,7 @@ export const SignUpView: React.FC<SignUpViewProps> = ({
             className="text-xs text-[#777267] hover:text-[#292821] inline-flex items-center gap-1 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Virasat Quest Homepage</span>
+            <span>Return to Virasat  Homepage</span>
           </button>
         </div>
       </div>

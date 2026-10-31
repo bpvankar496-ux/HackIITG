@@ -188,7 +188,7 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &bull; Virasat Quest Archives',
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &bull; Virasat  Archives',
     }).addTo(map);
 
     const markersLayer = L.layerGroup().addTo(map);
@@ -386,7 +386,7 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
       const isSelected = selectedGroupKey === group.key;
       const count = group.documents.length;
 
-      // Custom styled SVG Pin matching Virasat Quest visual design
+      // Custom styled SVG Pin matching Virasat  visual design
       const iconHtml = `
         <div class="relative flex items-center justify-center cursor-pointer transition-transform duration-200 ${
           isSelected ? 'scale-125 z-50' : 'hover:scale-110'

@@ -640,7 +640,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               Source Collection / Archive
             </span>
             <div className="mt-1 font-medium text-[#16192E]">
-              {document.source_name || 'Virasat Quest Primary Archive'}
+              {document.source_name || 'Virasat  Primary Archive'}
             </div>
           </div>
 

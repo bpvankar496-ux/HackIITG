@@ -115,14 +115,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
             type="button"
             onClick={onNavigateToHome}
             className="inline-flex items-center gap-2 transition-transform hover:scale-105"
-            aria-label="Virasat Quest Home"
+            aria-label="Virasat  Home"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#B65F43] text-white shadow-xs">
               <Compass className="h-6 w-6 stroke-[1.8]" />
             </div>
           </button>
           <h1 className="font-serif text-3xl font-bold tracking-tight text-[#292821]">
-            Sign In to Virasat Quest
+            Sign In to Virasat 
           </h1>
           <p className="text-xs text-[#777267] max-w-sm mx-auto">
             Access your research passport, view private archival notes, and sync saved heritage monuments.
@@ -351,7 +351,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             className="text-xs text-[#777267] hover:text-[#292821] inline-flex items-center gap-1 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Virasat Quest Homepage</span>
+            <span>Return to Virasat  Homepage</span>
           </button>
         </div>
       </div>

@@ -90,7 +90,7 @@ export function buildGroundedAssistantPrompt(
   passages: ArchivePassageResult[],
   conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = []
 ): { systemInstruction: string; userPrompt: string } {
-  const systemInstruction = `You are the Virasat Quest Heritage Research Assistant, a senior archival scholar, epigraphist, and historian.
+  const systemInstruction = `You are the Virasat  Heritage Research Assistant, a senior archival scholar, epigraphist, and historian.
 Your task is to provide rigorous, scholarly answers to researcher questions based EXCLUSIVELY on the historical documents and extracted folios provided in the <archival_evidence> section.
 
 CRITICAL DIRECTIVES:
@@ -243,7 +243,7 @@ export function generateFallbackGroundedAnswer(
     .map((c) => `- In **${c.documentTitle}** (Folio p. ${c.pageNumber}) [Citation ${c.citationId}]: "${c.passageSnippet}"`)
     .join('\n\n');
 
-  const answer = `Based on the primary archival records currently indexed in the Virasat Quest repository, the following verified passages address your inquiry:\n\n${synthesisPoints}\n\n*Note: Synthesized strictly from repository document page extractions. Use the citation buttons below to inspect the original high-resolution folios.*`;
+  const answer = `Based on the primary archival records currently indexed in the Virasat  repository, the following verified passages address your inquiry:\n\n${synthesisPoints}\n\n*Note: Synthesized strictly from repository document page extractions. Use the citation buttons below to inspect the original high-resolution folios.*`;
 
   return { answer, citations };
 }

@@ -1,5 +1,5 @@
 /**
- * Types for the Virasat Quest Heritage Knowledge Graph (Step 8)
+ * Types for the Virasat  Heritage Knowledge Graph (Step 8)
  */
 
 export type EntityType =

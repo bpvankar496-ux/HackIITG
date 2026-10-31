@@ -18,7 +18,7 @@ export const Logo: React.FC = () => {
         />
       </svg>
       <span className="font-serif text-2xl font-bold tracking-wide text-[#292821]">
-        Virasat Quest
+        Virasat 
       </span>
     </span>
   );

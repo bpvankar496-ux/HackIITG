@@ -47,7 +47,7 @@ export const ArchiveViewer: React.FC<ArchiveViewerProps> = ({
 
   const copyCitation = () => {
     if (!activeDoc) return;
-    const citationText = `${activeDoc.author_or_creator}. "${activeDoc.title}." (${activeDoc.period_date}). Preserved in ${activeDoc.source_archive}. Folio / Page ${currentPage}. Virasat Quest Archival Identifier: ${activeDoc.slug}.`;
+    const citationText = `${activeDoc.author_or_creator}. "${activeDoc.title}." (${activeDoc.period_date}). Preserved in ${activeDoc.source_archive}. Folio / Page ${currentPage}. Virasat  Archival Identifier: ${activeDoc.slug}.`;
     navigator.clipboard.writeText(citationText);
     setCopiedCitation(true);
     setTimeout(() => setCopiedCitation(false), 2500);

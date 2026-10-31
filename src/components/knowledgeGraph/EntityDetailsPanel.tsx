@@ -113,7 +113,7 @@ export const EntityDetailsPanel: React.FC<EntityDetailsPanelProps> = ({
           <div className="p-3 bg-[#B65F43]/10 border border-[#B65F43]/30 rounded-lg flex items-center justify-between">
             <div>
               <p className="font-serif font-bold text-[#292821] text-sm">
-                Archival Record in Virasat Quest
+                Archival Record in Virasat 
               </p>
               <p className="text-xs text-[#777267]">
                 View complete site dossier, 3D model, and photography

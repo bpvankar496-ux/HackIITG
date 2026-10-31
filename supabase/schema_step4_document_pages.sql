@@ -1,4 +1,4 @@
--- Virasat Quest: page-level OCR / text extraction with provenance.
+-- Virasat : page-level OCR / text extraction with provenance.
 
 create table if not exists public.document_pages (
   id uuid primary key default gen_random_uuid(),

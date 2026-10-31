@@ -1,4 +1,4 @@
--- Virasat Quest: knowledge graph tables.
+-- Virasat : knowledge graph tables.
 -- The app ships its seed graph in src/data/seedKnowledgeGraph.ts, so these
 -- tables start empty and are meant for community and AI-proposed additions.
 

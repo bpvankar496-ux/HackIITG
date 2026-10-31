@@ -1,5 +1,5 @@
 /**
- * Comprehensive Schema for Authentic Heritage Records in Virasat Quest (Step 10)
+ * Comprehensive Schema for Authentic Heritage Records in Virasat  (Step 10)
  */
 
 export type HeritageCategory =

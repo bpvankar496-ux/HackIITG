@@ -73,7 +73,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </h1>
 
               <p className="text-base sm:text-lg leading-relaxed text-[#777267] max-w-2xl font-sans">
-                Virasat Quest transforms scattered colonial surveys, medieval Sanskrit epigraphs, Persian court charters, and unindexed field notes into an integrated, verified, and AI-grounded living knowledge archive.
+                Virasat  transforms scattered colonial surveys, medieval Sanskrit epigraphs, Persian court charters, and unindexed field notes into an integrated, verified, and AI-grounded living knowledge archive.
               </p>
 
               {/* Primary Call to Actions */}
@@ -341,7 +341,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 Featured Heritage Monuments
               </h2>
               <p className="text-xs sm:text-sm text-[#777267] mt-1">
-                A selection of verified architectural landmarks from the Virasat Quest corpus.
+                A selection of verified architectural landmarks from the Virasat  corpus.
               </p>
             </div>
 

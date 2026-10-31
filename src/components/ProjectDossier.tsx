@@ -120,7 +120,7 @@ alter table public.documents enable row level security;`;
           Project Dossier &amp; Technical Foundation
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-[#6B6860]">
-          Comprehensive technical blueprint for <strong>Virasat Quest</strong>, built for the problem statement &ldquo;Digital Revitalisation of Unstructured Cultural &amp; Architectural Heritage Archives.&rdquo;
+          Comprehensive technical blueprint for <strong>Virasat </strong>, built for the problem statement &ldquo;Digital Revitalisation of Unstructured Cultural &amp; Architectural Heritage Archives.&rdquo;
         </p>
       </div>
 

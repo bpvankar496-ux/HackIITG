@@ -176,7 +176,7 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
 
   const handleExportJson = () => {
     const data = {
-      project: 'Virasat Quest Heritage Knowledge Graph',
+      project: 'Virasat  Heritage Knowledge Graph',
       version: '1.0',
       exportedAt: new Date().toISOString(),
       entities,

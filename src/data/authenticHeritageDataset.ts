@@ -2,7 +2,7 @@ import { HeritageSiteItem } from '../types/heritage';
 import { getHeritageMedia } from './heritageImages';
 
 /**
- * Authentic, verified Indian heritage dataset for Virasat Quest (Step 10).
+ * Authentic, verified Indian heritage dataset for Virasat  (Step 10).
  * Curated from authoritative primary sources:
  * - UNESCO World Heritage Convention dossiers (whc.unesco.org)
  * - Archaeological Survey of India (ASI) monographs & notifications

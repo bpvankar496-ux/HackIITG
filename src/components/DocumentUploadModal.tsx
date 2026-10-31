@@ -97,7 +97,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       document_type: 'survey_report',
       period_date: extractedResult.periodOrEra,
       original_language: extractedResult.scriptLanguage,
-      source_archive: 'Digitised via Virasat Quest Ingestion Pipeline',
+      source_archive: 'Digitised via Virasat  Ingestion Pipeline',
       license: 'Unspecified; source and reuse terms require review',
       original_scan_url: selectedImage || '',
       transcription_status: 'ocr_extracted',

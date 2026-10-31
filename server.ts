@@ -46,4 +46,4 @@ app.use(express.static(dist));
 app.get('*', (_req, res) => res.sendFile(path.join(dist, 'index.html')));
 
 const port = Number(process.env.PORT) || 3000;
-app.listen(port, '0.0.0.0', () => console.log(`Virasat Quest running on http://localhost:${port}`));
+app.listen(port, '0.0.0.0', () => console.log(`Virasat  running on http://localhost:${port}`));

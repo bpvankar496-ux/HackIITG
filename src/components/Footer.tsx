@@ -23,7 +23,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <Compass className="h-4 w-4" />
               </div>
               <span className="font-serif text-xl font-bold text-[#292821]">
-                Virasat Quest
+                Virasat 
               </span>
             </div>
             <p className="text-xs leading-relaxed text-[#777267]">
@@ -145,7 +145,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
 
         <div className="mt-10 border-t border-[#DCC9AD]/60 pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#777267]">
-          <span>&copy; {new Date().getFullYear()} Virasat Quest &bull; Digital Heritage Preservation Archive.</span>
+          <span>&copy; {new Date().getFullYear()} Virasat  &bull; Digital Heritage Preservation Archive.</span>
           <span className="mt-2 sm:mt-0 italic font-serif text-[#292821]">
             &ldquo;Every Place Has a Story. Every Story Deserves to Live.&rdquo;
           </span>

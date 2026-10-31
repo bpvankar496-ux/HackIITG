@@ -1,4 +1,4 @@
--- Virasat Quest: base heritage tables and per-user saved records.
+-- Virasat : base heritage tables and per-user saved records.
 -- Run first. Safe to re-run.
 
 create table if not exists public.heritage_sites (
