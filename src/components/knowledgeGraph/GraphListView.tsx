@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HeritageEntity, HeritageRelationship } from '../../types/knowledgeGraph';
 import { ENTITY_COLORS, getEntityIcon } from './GraphLegend';
-import { ArrowRight, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 
 interface GraphListViewProps {
   entities: HeritageEntity[];
@@ -20,6 +20,14 @@ export const GraphListView: React.FC<GraphListViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'entities' | 'relationships'>('entities');
   const entityMap = new Map(entities.map(e => [e.id, e]));
+
+  const handleEntityDetails = (entity: HeritageEntity) => {
+    if (entity.supportingSiteSlug && onNavigateToSite) {
+      onNavigateToSite(entity.supportingSiteSlug);
+      return;
+    }
+    onSelectEntity(entity.id);
+  };
 
   return (
     <div className="w-full bg-white border border-[#DCC9AD] rounded-xl shadow-xs overflow-hidden">
@@ -69,7 +77,7 @@ export const GraphListView: React.FC<GraphListViewProps> = ({
                   <tr key={ent.id} className="hover:bg-[#F8F5EF]/60 transition-colors">
                     <td className="py-3 px-3 font-serif font-bold text-[#292821]">
                       <button
-                        onClick={() => onSelectEntity(ent.id)}
+                        onClick={() => handleEntityDetails(ent)}
                         type="button"
                         className="hover:text-[#B65F43] text-left inline-flex items-center gap-2"
                       >
@@ -105,24 +113,14 @@ export const GraphListView: React.FC<GraphListViewProps> = ({
                       )}
                     </td>
 
-                    <td className="py-3 px-3 text-right space-x-2">
+                    <td className="py-3 px-3 text-right">
                       <button
-                        onClick={() => onSelectEntity(ent.id)}
+                        onClick={() => handleEntityDetails(ent)}
                         type="button"
                         className="text-xs text-[#B65F43] hover:underline font-medium"
                       >
                         Details
                       </button>
-                      {ent.supportingSiteSlug && onNavigateToSite && (
-                        <button
-                          onClick={() => onNavigateToSite(ent.supportingSiteSlug!)}
-                          type="button"
-                          className="text-xs text-[#292821] hover:underline font-medium inline-flex items-center gap-0.5"
-                        >
-                          <span>Site</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </button>
-                      )}
                     </td>
                   </tr>
                 );

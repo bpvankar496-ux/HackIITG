@@ -106,19 +106,36 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
 
     // 2. Public read endpoints
     if (route === '/api/documents' && method === 'GET') {
+      const viewer = await getUser(req.headers);
       const { listAllDocuments } = await import('./documentRepository.ts');
-      return json(200, { ok: true, ...(await listAllDocuments()) });
+      const result = await listAllDocuments();
+      const documents = result.documents.filter(
+        (doc) => doc.verification_status !== 'unverified' || doc.created_by === viewer?.id
+      );
+      return json(200, { ok: true, ...result, documents });
     }
 
     if (route === '/api/documents/pages' && method === 'GET') {
       const documentId = urlObj.searchParams.get('documentId');
       if (!documentId) return json(400, { error: 'documentId query parameter is required.' });
+      const viewer = await getUser(req.headers);
+      const { getDocumentById, getDocumentSourceAvailability } = await import('./documentRepository.ts');
+      const document = await getDocumentById(documentId);
+      if (!document) return json(404, { ok: false, error: 'Document not found.' });
+      if (document.verification_status === 'unverified' && document.created_by !== viewer?.id) {
+        return json(403, { ok: false, error: 'You do not have access to this document.' });
+      }
       const { getDocumentExtractionStatus } = await import('./textExtractionEngine.ts');
-      return json(200, { ok: true, ...(await getDocumentExtractionStatus(documentId)) });
+      const [extraction, sourceAsset] = await Promise.all([
+        getDocumentExtractionStatus(documentId),
+        getDocumentSourceAvailability(document.storage_path),
+      ]);
+      return json(200, { ok: true, ...extraction, sourceAsset });
     }
 
     if (route === '/api/archive/search' && method === 'GET') {
       const p = urlObj.searchParams;
+      const viewer = await getUser(req.headers);
       const clamp = (v: string | null, def: number, max: number) =>
         Math.min(Math.max(parseInt(v || String(def), 10) || def, 0), max);
       const { searchArchivalPassages } = await import('./searchRepository.ts');
@@ -132,7 +149,8 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
           verificationStatus: (p.get('verification') || 'all') as any,
         },
         clamp(p.get('limit'), 30, 100),
-        clamp(p.get('offset'), 0, 10_000)
+        clamp(p.get('offset'), 0, 10_000),
+        viewer?.id || null
       );
       return json(200, { ok: true, ...result });
     }
@@ -177,8 +195,12 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
         const { getDocumentById } = await import('./documentRepository.ts');
         const doc = await getDocumentById(documentId);
         if (!doc) return json(404, { ok: false, error: 'Document not found.' });
-        if (doc.created_by !== user.id && user.id !== 'dev-anonymous') {
-          return json(403, { ok: false, error: 'Only the uploader can process this document.' });
+        if (
+          doc.verification_status === 'unverified' &&
+          doc.created_by !== user.id &&
+          user.id !== 'dev-anonymous'
+        ) {
+          return json(403, { ok: false, error: 'Only the uploader can process this unverified document.' });
         }
         if (isRateLimited(`process:${user.id}`, 30, HOUR)) {
           return json(429, { ok: false, error: 'Processing limit reached. Try again later.' });
@@ -223,6 +245,7 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
           question,
           conversationHistory: Array.isArray(conversationHistory) ? conversationHistory.slice(-10) : [],
           filters: filters || {},
+          viewerUserId: user.id === 'dev-anonymous' ? null : user.id,
         });
         return json(result.ok ? 200 : 400, result);
       }

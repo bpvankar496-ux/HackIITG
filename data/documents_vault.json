@@ -15,11 +15,11 @@
     "original_filename": "burgess-architectural-survey-1876.pdf",
     "mime_type": "application/pdf",
     "file_size_bytes": 451,
-    "processing_status": "completed",
+    "processing_status": "failed",
     "verification_status": "peer_reviewed",
     "created_by": null,
     "created_at": "2026-10-28T18:24:54.426Z",
-    "updated_at": "2026-10-28T18:43:20.930Z"
+    "updated_at": "2026-10-31T07:19:48.808Z"
   },
   {
     "id": "6a48d8b1-3012-4c6e-9911-fb32890c4210",
@@ -59,11 +59,11 @@
     "original_filename": "modhera-sun-temple-survey-1886.pdf",
     "mime_type": "application/pdf",
     "file_size_bytes": 612,
-    "processing_status": "completed",
+    "processing_status": "failed",
     "verification_status": "peer_reviewed",
     "created_by": null,
     "created_at": "2026-10-28T19:10:00.000Z",
-    "updated_at": "2026-10-28T19:10:00.000Z"
+    "updated_at": "2026-10-31T05:57:45.065Z"
   },
   {
     "id": "8c6af0d3-5234-6e8a-bb33-fd540b2e6432",
@@ -81,7 +81,7 @@
     "original_filename": "prabandha-chintamani-1304.pdf",
     "mime_type": "application/pdf",
     "file_size_bytes": 540,
-    "processing_status": "completed",
+    "processing_status": "needs_review",
     "verification_status": "under_review",
     "created_by": null,
     "created_at": "2026-10-28T19:15:00.000Z",

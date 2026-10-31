@@ -70,7 +70,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
           <div>
             <h2 className="font-serif text-xl font-bold text-[#292821]">No Saved Heritage Places</h2>
             <p className="text-xs text-[#777267] max-w-md mx-auto mt-1">
-              While exploring the heritage database, interactive map, or knowledge graph, click &ldquo;Save Place&rdquo; to bookmark monuments here.
+              While exploring the heritage database or Knowledge Graph, click &ldquo;Save Place&rdquo; to bookmark monuments here.
             </p>
           </div>
           <button

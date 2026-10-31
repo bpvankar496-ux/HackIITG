@@ -8,6 +8,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+const runtimeVaultFiles = [
+  path.resolve(projectRoot, 'data/documents_vault.json'),
+  path.resolve(projectRoot, 'data/document_pages_vault.json'),
+];
 
 function virasatBackendPlugin(): Plugin {
   return {
@@ -67,7 +71,9 @@ export default defineConfig(() => {
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
-      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      // OCR updates these runtime fallback files. They are server data, not
+      // frontend source, so a write must not trigger a browser page reload.
+      watch: process.env.DISABLE_HMR === 'true' ? null : { ignored: runtimeVaultFiles },
     },
   };
 });

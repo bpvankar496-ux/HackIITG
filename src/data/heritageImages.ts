@@ -66,7 +66,7 @@ export const HERITAGE_IMAGE_CATALOG: Record<string, HeritageImageDefinition> = {
   'pattadakal-monuments': image('Pattadakal Temple Complex.jpg', 'Temples of the Pattadakal monument complex, Karnataka', 'Ladybird789', 'CC BY-SA 4.0'),
   'mahabalipuram-monuments': image('Shore Temple Mahabalipuram India.jpg', 'Shore Temple at Mahabalipuram, Tamil Nadu', 'Rvk1982', 'CC BY-SA 4.0'),
   'brihadisvara-temple': image('Brihadeeswarar Temple, Thanjavur.JPG', 'Brihadisvara Temple in Thanjavur, Tamil Nadu', 'Aalangaram', 'CC BY-SA 3.0'),
-  'meenakshi-temple': image('Meenakshi Temple, Gopuram, Madurai, India.jpg', 'Gopuram of Meenakshi Temple in Madurai', 'Vyacheslav Argenberg', 'CC BY-SA 4.0'),
+  'meenakshi-temple': image('Meenakshi Temple, Gopuram, Madurai, India.jpg', 'Gopuram of Meenakshi Temple in Madurai', 'Vyacheslav Argenberg', 'CC BY 4.0'),
   'golconda-fort': image('Golconda Fort, Hyderabad.jpg', 'Golconda Fort in Hyderabad, Telangana', 'Apar Singh Bataan', 'CC BY-SA 3.0'),
   'nalanda-mahavihara': image('Archeological Ruins of Nalanda Mahavihara.jpg', 'Archaeological ruins of Nalanda Mahavihara in Bihar', 'Uphogaphy', 'CC BY-SA 4.0'),
   'konark-sun-temple': image('Konark Sun Temple in Odisha.jpg', 'Konark Sun Temple in Odisha', 'C Ajay Karthikeyan', 'CC BY-SA 4.0'),

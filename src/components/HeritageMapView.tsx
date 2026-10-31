@@ -5,6 +5,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   MapPin,
   Search,
@@ -24,15 +25,20 @@ import {
   Info,
 } from 'lucide-react';
 import type { DocumentRecord, DocumentType, VerificationStatus } from '../types/database.types';
+import { SEED_HERITAGE_SITES } from '../data/seedHeritageSites';
 import {
   MapFilters,
   MapLocationGroup,
   filterMapRecords,
   groupRecordsByLocation,
-  computeMapBounds,
   formatCoordinateDisplay,
+  getCoordinateIssueReason,
+  clusterProjectedPoints,
+  isDocumentAtHeritageSite,
+  validateCoordinates,
 } from '../utils/heritageMap';
 import { DocumentDetailModal } from './DocumentDetailModal';
+import { getAuthHeaders } from '../lib/supabase';
 
 const escapeHtml = (value: unknown) =>
   String(value ?? '').replace(/[&<>"']/g, (character) => {
@@ -50,17 +56,20 @@ interface HeritageMapViewProps {
   onNavigateToExplorer?: () => void;
   onNavigateToAssistant?: () => void;
   onNavigateToUpload?: () => void;
+  onNavigateToSite?: (slug: string) => void;
 }
 
 export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
   onNavigateToExplorer,
   onNavigateToAssistant,
   onNavigateToUpload,
+  onNavigateToSite,
 }) => {
   // Data State
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [sourceWarning, setSourceWarning] = useState<string | null>(null);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -78,19 +87,28 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const heritageMarkersLayerRef = useRef<L.LayerGroup | null>(null);
   const markersMapRef = useRef<Map<string, L.Marker>>(new Map());
+  const heritageMarkersMapRef = useRef<Map<string, L.Marker>>(new Map());
 
   // Fetch real document records
   const fetchDocuments = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/documents');
+      const res = await fetch('/api/documents', { headers: await getAuthHeaders() });
       const data = await res.json();
       if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Failed to retrieve archive records.');
       }
       setDocuments(data.documents || []);
+      setSourceWarning(
+        data.source === 'local_vault'
+          ? 'The database returned no document rows. Map archive records are being read from the local vault.'
+          : data.source === 'supabase_and_local'
+          ? 'Map archive records combine Supabase with additional records from the local vault.'
+          : null
+      );
     } catch (err: any) {
       setError(err.message || 'Unable to load heritage documents.');
     } finally {
@@ -112,7 +130,7 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
   }, [documents]);
 
   // Apply filters and group records
-  const { mappedRecords, unmappedRecords, locationGroups } = useMemo(() => {
+  const { mappedRecords, filteredUnmappedCount, locationGroups } = useMemo(() => {
     const { mapped, unmapped } = filterMapRecords(documents, {
       query: searchQuery,
       documentType: filterDocType,
@@ -122,10 +140,36 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
     const groups = groupRecordsByLocation(mapped);
     return {
       mappedRecords: mapped,
-      unmappedRecords: unmapped,
+      filteredUnmappedCount: unmapped.length,
       locationGroups: groups,
     };
   }, [documents, searchQuery, filterDocType, filterPeriod, filterVerification]);
+  const unmappedRecords = useMemo(
+    () => documents.filter((doc) => !validateCoordinates(doc.latitude, doc.longitude)),
+    [documents]
+  );
+
+  const mappedHeritageSites = useMemo(
+    () => SEED_HERITAGE_SITES.filter((site) => validateCoordinates(site.lat, site.lng)),
+    []
+  );
+  const visibleHeritageSites = useMemo(() => {
+    const tokens = searchQuery.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return mappedHeritageSites;
+    return mappedHeritageSites.filter((site) => {
+      const haystack = [site.name, ...(site.alternateNames || []), site.state, site.district, site.locality, site.category]
+        .filter(Boolean).join(' ').toLocaleLowerCase();
+      return tokens.every((token) => haystack.includes(token));
+    });
+  }, [mappedHeritageSites, searchQuery]);
+  const unmappedHeritageSites = useMemo(
+    () => SEED_HERITAGE_SITES.filter((site) => !validateCoordinates(site.lat, site.lng)),
+    []
+  );
+  const unverifiedHeritageSites = useMemo(
+    () => SEED_HERITAGE_SITES.filter((site) => site.verification !== 'verified'),
+    []
+  );
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -148,7 +192,9 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
     }).addTo(map);
 
     const markersLayer = L.layerGroup().addTo(map);
+    const heritageMarkersLayer = L.layerGroup().addTo(map);
     markersLayerRef.current = markersLayer;
+    heritageMarkersLayerRef.current = heritageMarkersLayer;
     mapInstanceRef.current = map;
 
     return () => {
@@ -157,7 +203,172 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
     };
   }, []);
 
-  // Sync Markers and bounds when locationGroups or selection changes
+  // Render every visible monument and cluster markers that would overlap at
+  // the current zoom. Each cluster popup keeps every monument individually openable.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const layer = heritageMarkersLayerRef.current;
+    if (!map || !layer) return;
+
+    const renderMonumentMarkers = () => {
+      layer.clearLayers();
+      heritageMarkersMapRef.current.clear();
+
+      const projectedSites = visibleHeritageSites.map((site) => ({
+        site,
+        ...map.project([site.lat!, site.lng!], map.getZoom()),
+      }));
+      const clusters = clusterProjectedPoints(projectedSites, 44);
+
+      clusters.forEach((cluster) => {
+        const sites = cluster.map((point) => point.site);
+        const latitude = sites.reduce((sum, site) => sum + site.lat!, 0) / sites.length;
+        const longitude = sites.reduce((sum, site) => sum + site.lng!, 0) / sites.length;
+        const clusterLabel = sites.map((site) => site.name).join(', ');
+        const iconHtml = sites.length > 1
+          ? `<span class="vq-monument-cluster" aria-label="${sites.length} monuments">${sites.length}</span>`
+          : '<span class="vq-monument-marker"><span aria-hidden="true">◆</span></span>';
+        const iconSize = sites.length > 1 ? 36 : 30;
+        const marker = L.marker([latitude, longitude], {
+          icon: L.divIcon({
+            html: iconHtml,
+            className: 'vq-monument-marker-host',
+            iconSize: [iconSize, iconSize],
+            iconAnchor: [iconSize / 2, iconSize / 2],
+          }),
+          title: clusterLabel,
+          alt: sites.length > 1 ? `Map cluster for ${clusterLabel}` : `Map marker for ${clusterLabel}`,
+        });
+
+        const popup = document.createElement('div');
+        popup.className = 'min-w-[230px] max-w-[300px] p-1 font-sans text-[#18191E]';
+        if (sites.length > 1) {
+          const heading = document.createElement('h3');
+          heading.className = 'mb-2 border-b border-[#E2D7C3] pb-2 font-serif text-base font-bold text-[#16192E]';
+          heading.textContent = `${sites.length} nearby monuments`;
+          popup.appendChild(heading);
+        }
+
+        const popupDocuments = new Map<string, DocumentRecord>();
+        sites.forEach((site) => {
+          const section = document.createElement('section');
+          section.className = 'mb-3 rounded border border-[#E2D7C3] bg-[#FDFCF9] p-2 last:mb-0';
+          const media = site.heritage_media?.[0];
+          if (media?.url) {
+            const image = document.createElement('img');
+            image.src = media.url;
+            image.alt = media.alt || `Photograph of ${site.name}`;
+            image.loading = 'lazy';
+            image.className = 'mb-2 h-28 w-full rounded object-cover';
+            const fallback = document.createElement('p');
+            fallback.className = 'mb-2 rounded bg-[#F4EFE6] p-3 text-center text-[11px] text-[#6B6860]';
+            fallback.textContent = `Photograph unavailable for ${site.name}`;
+            fallback.hidden = true;
+            image.addEventListener('error', () => {
+              image.hidden = true;
+              fallback.hidden = false;
+            }, { once: true });
+            section.append(image, fallback);
+          }
+
+          const title = document.createElement('h4');
+          title.className = 'font-serif text-sm font-bold text-[#16192E]';
+          title.textContent = site.name;
+          section.appendChild(title);
+          const location = document.createElement('p');
+          location.className = 'mt-1 text-[11px] text-[#6B6860]';
+          location.textContent = [site.locality, site.district, site.state].filter(Boolean).join(', ');
+          section.appendChild(location);
+          const coordinates = document.createElement('p');
+          coordinates.className = 'mt-1 text-[10px] font-mono text-[#8C827A]';
+          coordinates.textContent = formatCoordinateDisplay(site.lat!, site.lng!);
+          section.appendChild(coordinates);
+          const description = document.createElement('p');
+          description.className = 'mt-2 text-xs leading-relaxed text-[#3F3B34]';
+          description.textContent = site.description;
+          section.appendChild(description);
+
+          if (media?.source_url) {
+            const attribution = document.createElement('a');
+            attribution.href = media.source_url;
+            attribution.target = '_blank';
+            attribution.rel = 'noreferrer';
+            attribution.className = 'mt-2 block text-[10px] text-[#6B6860] underline';
+            attribution.textContent = `${media.photographer} · ${media.license}`;
+            section.appendChild(attribution);
+          }
+
+          if (onNavigateToSite) {
+            const details = document.createElement('button');
+            details.type = 'button';
+            details.className = 'mt-2 w-full rounded bg-[#16192E] px-3 py-2 text-xs font-semibold text-white';
+            details.textContent = 'Open monument details';
+            details.addEventListener('click', () => onNavigateToSite(site.slug));
+            section.appendChild(details);
+          }
+
+          const relatedDocuments = locationGroups.flatMap((group) =>
+            group.documents.filter((doc) => isDocumentAtHeritageSite(doc, site))
+          );
+          if (relatedDocuments.length) {
+            const archiveHeading = document.createElement('h5');
+            archiveHeading.className = 'mt-2 border-t border-[#E2D7C3] pt-2 text-[10px] font-bold uppercase tracking-wide text-[#8C827A]';
+            archiveHeading.textContent = `Related archival records (${relatedDocuments.length})`;
+            section.appendChild(archiveHeading);
+            relatedDocuments.forEach((doc) => {
+              popupDocuments.set(doc.id, doc);
+              const record = document.createElement('div');
+              record.className = 'mt-2 rounded border border-[#E2D7C3] bg-white p-2';
+              const recordTitle = document.createElement('p');
+              recordTitle.className = 'text-xs font-semibold text-[#16192E]';
+              recordTitle.textContent = doc.title;
+              record.appendChild(recordTitle);
+              const inspect = document.createElement('button');
+              inspect.type = 'button';
+              inspect.dataset.docId = doc.id;
+              inspect.className = 'mt-1 text-[11px] font-semibold text-[#B38E46] hover:underline';
+              inspect.textContent = 'Inspect folio →';
+              record.appendChild(inspect);
+              section.appendChild(record);
+            });
+          }
+          popup.appendChild(section);
+          heritageMarkersMapRef.current.set(site.slug, marker);
+        });
+
+        popup.addEventListener('click', (event) => {
+          const target = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-doc-id]');
+          const doc = target && popupDocuments.get(target.dataset.docId || '');
+          if (doc) {
+            setInspectDoc(doc);
+            setInspectModalOpen(true);
+          }
+        });
+        marker.bindPopup(popup, { maxWidth: 320, className: 'virasat-leaflet-popup' });
+        marker.addTo(layer);
+      });
+    };
+
+    renderMonumentMarkers();
+    map.on('zoomend', renderMonumentMarkers);
+
+    const allPoints: L.LatLngExpression[] = [
+      ...visibleHeritageSites.map((site) => [site.lat!, site.lng!] as [number, number]),
+      ...locationGroups.map((group) => [group.latitude, group.longitude] as [number, number]),
+    ];
+    if (allPoints.length) {
+      map.fitBounds(L.latLngBounds(allPoints), {
+        padding: [36, 36],
+        maxZoom: searchQuery.trim() ? 12 : 6,
+      });
+    }
+
+    return () => {
+      map.off('zoomend', renderMonumentMarkers);
+    };
+  }, [locationGroups, visibleHeritageSites, onNavigateToSite, searchQuery]);
+
+  // Sync archival markers and selection without hiding monument markers.
   useEffect(() => {
     const map = mapInstanceRef.current;
     const layer = markersLayerRef.current;
@@ -166,9 +377,12 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
     layer.clearLayers();
     markersMapRef.current.clear();
 
-    if (locationGroups.length === 0) return;
-
     locationGroups.forEach((group) => {
+      const representedByMonument = visibleHeritageSites.some((site) =>
+        group.documents.some((doc) => isDocumentAtHeritageSite(doc, site))
+      );
+      if (representedByMonument) return;
+
       const isSelected = selectedGroupKey === group.key;
       const count = group.documents.length;
 
@@ -270,12 +484,7 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
       markersMapRef.current.set(group.key, marker);
     });
 
-    // Auto-fit bounds if we have groups
-    const bounds = computeMapBounds(locationGroups);
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-    }
-  }, [locationGroups]);
+  }, [locationGroups, visibleHeritageSites, selectedGroupKey]);
 
   // Center on selected group from sidebar
   const handleSelectGroup = (group: MapLocationGroup) => {
@@ -283,7 +492,10 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
     const map = mapInstanceRef.current;
     if (map) {
       map.flyTo([group.latitude, group.longitude], 12, { duration: 0.8 });
-      const marker = markersMapRef.current.get(group.key);
+      const marker = markersMapRef.current.get(group.key) || visibleHeritageSites
+        .filter((site) => group.documents.some((doc) => isDocumentAtHeritageSite(doc, site)))
+        .map((site) => heritageMarkersMapRef.current.get(site.slug))
+        .find((candidate): candidate is L.Marker => Boolean(candidate));
       if (marker) {
         setTimeout(() => marker.openPopup(), 400);
       }
@@ -297,9 +509,12 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
     setFilterPeriod('all');
     setFilterVerification('all');
     setSelectedGroupKey(null);
-    const bounds = computeMapBounds(locationGroups);
-    if (bounds && mapInstanceRef.current) {
-      mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40] });
+    const allPoints: L.LatLngExpression[] = [
+      ...visibleHeritageSites.map((site) => [site.lat!, site.lng!] as [number, number]),
+      ...locationGroups.map((group) => [group.latitude, group.longitude] as [number, number]),
+    ];
+    if (allPoints.length && mapInstanceRef.current) {
+      mapInstanceRef.current.fitBounds(L.latLngBounds(allPoints), { padding: [36, 36], maxZoom: 6 });
     }
   };
 
@@ -317,14 +532,14 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-sm border border-[#2E7D32]/30 bg-[#E8F5E9] px-2 py-0.5 text-[11px] font-medium text-[#2E7D32]">
                   <CheckCircle2 className="h-3 w-3" />
-                  Real Geospatial Coordinates
+                  {mappedHeritageSites.length} of {SEED_HERITAGE_SITES.length} monuments mapped
                 </span>
               </div>
               <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight text-[#16192E]">
                 Geospatial Heritage Map
               </h1>
               <p className="text-xs text-[#6B6860]">
-                Explore primary archival folios, colonial architectural surveys, and epigraphical charters by their verified geographic origin.
+                Explore verified monument locations and archival records with documented geographic coordinates.
               </p>
             </div>
 
@@ -414,8 +629,11 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
           <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#6B6860]">
             <div className="flex items-center gap-3">
               <span>
-                <strong>{mappedRecords.length}</strong> georeferenced records across{' '}
-                <strong>{locationGroups.length}</strong> location sites
+                <strong>{mappedHeritageSites.length}</strong> verified monuments in dataset
+                {searchQuery.trim() && <span> ({visibleHeritageSites.length} match the map search)</span>}
+                <span>&bull;</span>
+                <strong>{mappedRecords.length}</strong> archival records match current filters across{' '}
+                <strong>{locationGroups.length}</strong> archive locations
               </span>
               <span>&bull;</span>
               <span>
@@ -423,19 +641,23 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
               </span>
             </div>
 
-            {unmappedRecords.length > 0 && (
-              <button
-                onClick={() => setShowUnmappedDrawer(!showUnmappedDrawer)}
-                className="inline-flex items-center gap-1 font-semibold text-[#B38E46] hover:underline"
-              >
-                <Info className="h-3.5 w-3.5" />
-                {unmappedRecords.length} unlocalized {unmappedRecords.length === 1 ? 'record' : 'records'}{' '}
-                (no coordinates)
-              </button>
-            )}
+            <button
+              onClick={() => setShowUnmappedDrawer(!showUnmappedDrawer)}
+              className="inline-flex items-center gap-1 font-semibold text-[#B38E46] hover:underline"
+            >
+              <Info className="h-3.5 w-3.5" />
+              Coordinate audit: {unmappedHeritageSites.length} monuments and {unmappedRecords.length} archive records unmapped
+              {filteredUnmappedCount !== unmappedRecords.length && <span className="sr-only"> {filteredUnmappedCount} currently match the selected filters.</span>}
+            </button>
           </div>
         </div>
       </div>
+
+      {sourceWarning && (
+        <p className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs text-amber-900" role="status">
+          {sourceWarning}
+        </p>
+      )}
 
       {/* Main Split Layout: Map on left, Records Sidebar on right */}
       <div className="flex-1 flex flex-col lg:flex-row relative">
@@ -475,12 +697,12 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
           <div className="absolute bottom-4 left-4 z-20 rounded-md border border-[#E2D7C3] bg-white/95 px-3 py-2 text-[11px] text-[#6B6860] shadow-md backdrop-blur-md hidden sm:block">
             <span className="font-semibold text-[#16192E] block mb-1">Map Legend</span>
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#B38E46]" />
-              <span>Verified Heritage Site</span>
+              <span className="h-2.5 w-2.5 rounded-full bg-[#B65F43]" />
+              <span>Monument with verified heritage record</span>
             </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#16192E]" />
-              <span>Selected Site</span>
+              <span className="h-2.5 w-2.5 rounded-full bg-[#B38E46]" />
+              <span>Archival document location</span>
             </div>
           </div>
         </div>
@@ -490,7 +712,7 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
           <div className="p-3 border-b border-[#E2D7C3] bg-[#F4EFE6]/60 flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#8C827A] flex items-center gap-1.5">
               <Layers className="h-3.5 w-3.5 text-[#B38E46]" />
-              Geographic Sites ({locationGroups.length})
+              Archive Locations ({locationGroups.length})
             </span>
             <span className="text-[11px] text-[#6B6860]">
               Click a site to fly to coordinates
@@ -502,10 +724,10 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
               <div className="p-8 text-center">
                 <MapPin className="mx-auto h-8 w-8 text-[#C9BBA2] mb-2" />
                 <h4 className="font-serif text-sm font-bold text-[#16192E]">
-                  No Mapped Heritage Records Found
+                  No Archive Locations Match
                 </h4>
                 <p className="mt-1 text-xs text-[#6B6860]">
-                  No archival records match the current filter criteria with verified geographic coordinates.
+                Monument markers remain available on the map. No archival records match the current filters with valid coordinates.
                 </p>
                 <button
                   onClick={handleResetFilters}
@@ -589,12 +811,12 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
           </div>
 
           {/* Unmapped Records Drawer Toggle */}
-          {unmappedRecords.length > 0 && showUnmappedDrawer && (
+          {showUnmappedDrawer && (
             <div className="border-t border-[#E2D7C3] bg-[#F4EFE6] p-3 max-h-[200px] overflow-y-auto">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[#16192E] flex items-center gap-1.5">
                   <Info className="h-3.5 w-3.5 text-[#B38E46]" />
-                  Unlocalized Archival Records ({unmappedRecords.length})
+                  Coordinate Audit: {unmappedHeritageSites.length + unmappedRecords.length} unmapped records
                 </span>
                 <button
                   onClick={() => setShowUnmappedDrawer(false)}
@@ -604,9 +826,20 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
                 </button>
               </div>
               <p className="text-[11px] text-[#6B6860] mb-2">
-                These records do not possess verified geographic coordinates. In accordance with archival fidelity, they are not plotted on the map.
+                Records stay visible here when their coordinates are missing or invalid. No location is guessed.
               </p>
               <div className="space-y-1.5">
+                {unmappedHeritageSites.length === 0 && unmappedRecords.length === 0 && (
+                  <p className="rounded border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900">
+                    All heritage and archive records currently have valid coordinates.
+                  </p>
+                )}
+                {unmappedHeritageSites.map((site) => (
+                  <div key={site.id} className="rounded border border-[#E2D7C3] bg-white p-2 text-xs">
+                    <strong className="font-serif text-[#16192E]">{site.name}</strong>
+                    <p className="text-[10px] text-[#8C827A]">Monument · {getCoordinateIssueReason(site.lat, site.lng)}</p>
+                  </div>
+                ))}
                 {unmappedRecords.map((doc) => (
                   <div
                     key={doc.id}
@@ -617,7 +850,7 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
                         {doc.title}
                       </h5>
                       <span className="text-[10px] text-[#8C827A]">
-                        {doc.historical_period} &bull; {doc.location_name || 'Manuscript Collection'}
+                        {doc.historical_period} &bull; {doc.location_name || 'Location not supplied'} &bull; {getCoordinateIssueReason(doc.latitude, doc.longitude)}
                       </span>
                     </div>
                     <button
@@ -632,6 +865,11 @@ export const HeritageMapView: React.FC<HeritageMapViewProps> = ({
                   </div>
                 ))}
               </div>
+              {unverifiedHeritageSites.length > 0 && (
+                <p className="mt-2 text-[10px] text-[#8C827A]">
+                  {unverifiedHeritageSites.length} monument records have coordinates but are not marked verified.
+                </p>
+              )}
             </div>
           )}
         </div>

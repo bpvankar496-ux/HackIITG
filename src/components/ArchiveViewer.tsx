@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArchivalDocument, HeritageSite } from '../types';
 import { BookOpen, FileText, CheckCircle2, Copy, Check, ChevronLeft, ChevronRight, Landmark, ExternalLink } from 'lucide-react';
 
@@ -28,8 +28,13 @@ export const ArchiveViewer: React.FC<ArchiveViewerProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [copiedCitation, setCopiedCitation] = useState<boolean>(false);
   const [filterType, setFilterType] = useState<string>('all');
+  const [scanUnavailable, setScanUnavailable] = useState<boolean>(false);
 
   const activeDoc = documents.find((d) => d.id === activeDocId) || documents[0];
+
+  useEffect(() => {
+    setScanUnavailable(false);
+  }, [activeDoc?.id, activeDoc?.original_scan_url]);
 
   const filteredDocs = documents.filter((d) => {
     if (filterType === 'all') return true;
@@ -174,11 +179,25 @@ export const ArchiveViewer: React.FC<ArchiveViewerProps> = ({
           </div>
 
           <div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-lg bg-stone-950">
-            <img
-              src={activeDoc.original_scan_url}
-              alt={`Historical document scan of ${activeDoc.title}`}
-              className="max-h-[520px] w-full object-contain p-2 transition-transform duration-300"
-            />
+            {activeDoc.original_scan_url ? (
+              <img
+                src={activeDoc.original_scan_url}
+                alt={`Historical document scan of ${activeDoc.title}`}
+                className="max-h-[520px] w-full object-contain p-2 transition-transform duration-300"
+                onError={(event) => {
+                  event.currentTarget.hidden = true;
+                  setScanUnavailable(true);
+                }}
+              />
+            ) : null}
+            <p
+              data-scan-fallback
+              hidden={Boolean(activeDoc.original_scan_url) && !scanUnavailable}
+              className="max-w-xs p-6 text-center text-xs text-stone-300"
+              role="status"
+            >
+              Original scan unavailable. This record has transcription metadata only.
+            </p>
             <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-[11px] text-stone-300 backdrop-blur-sm">
               Source: {activeDoc.source_archive}
             </div>
@@ -186,7 +205,9 @@ export const ArchiveViewer: React.FC<ArchiveViewerProps> = ({
 
           <div className="mt-3 flex items-center justify-between text-xs text-stone-400">
             <span>License: {activeDoc.license}</span>
-            <span className="text-amber-300/80">High-Resolution Plate</span>
+            <span className="text-amber-300/80">
+              {activeDoc.original_scan_url && !scanUnavailable ? 'Source scan attached' : 'No source scan available'}
+            </span>
           </div>
         </div>
 

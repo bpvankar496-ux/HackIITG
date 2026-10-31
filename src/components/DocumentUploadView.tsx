@@ -25,6 +25,7 @@ import {
   DocumentTypeEnum,
 } from '../utils/uploadValidation';
 import { DocumentRecord } from '../types/database.types';
+import { getAuthHeaders } from '../lib/supabase';
 
 interface DocumentUploadViewProps {
   onUploadSuccess: (doc: DocumentRecord) => void;
@@ -152,7 +153,7 @@ export const DocumentUploadView: React.FC<DocumentUploadViewProps> = ({
       // Submit to server endpoint
       const response = await fetch('/api/documents/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
         body: JSON.stringify({
           fileBase64,
           filename: file.name,

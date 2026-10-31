@@ -12,7 +12,8 @@ create or replace function public.search_archive_passages(
   filter_language text default 'all',
   filter_verification text default 'all',
   limit_val integer default 30,
-  offset_val integer default 0
+  offset_val integer default 0,
+  viewer_user_id uuid default null
 )
 returns table (
   passage_id uuid,
@@ -56,7 +57,14 @@ as $$
     and (filter_location = 'all' or d.location_name = filter_location)
     and (filter_language = 'all' or d.language = filter_language)
     and (filter_verification = 'all' or d.verification_status = filter_verification)
+    and (d.verification_status <> 'unverified' or (viewer_user_id is not null and d.created_by = viewer_user_id))
   order by 18 desc, d.title, p.page_number
   limit greatest(limit_val, 1)
   offset greatest(offset_val, 0);
 $$;
+
+grant execute on function public.search_archive_passages(text, text, text, text, text, text, integer, integer, uuid)
+  to service_role;
+
+-- Make the new RPC signature available to PostgREST immediately after migration.
+notify pgrst, 'reload schema';

@@ -341,9 +341,6 @@ alter table public.documents enable row level security;`;
               <strong>Step 5:</strong> Grounded Gemini AI Heritage Research Assistant with Evidence Citations.
             </li>
             <li>
-              <strong>Step 6:</strong> Interactive Leaflet Heritage Map &amp; Coordinate Linkage.
-            </li>
-            <li>
               <strong>Step 7:</strong> Heritage Knowledge Graph (Monuments, Dynasties, Sources).
             </li>
           </ol>

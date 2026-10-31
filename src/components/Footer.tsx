@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Compass, ExternalLink, Github, ShieldCheck, Landmark, BookOpen, Network, MapPin, Sparkles, Upload, Bookmark, Gamepad2 } from 'lucide-react';
+import { Compass, ExternalLink, Github, ShieldCheck, Landmark, BookOpen, Network, Sparkles, Upload, Bookmark, Gamepad2 } from 'lucide-react';
 import { NavSection } from './Header';
 
 interface FooterProps {
@@ -44,21 +44,21 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate?.('explore')}
-                  className="hover:text-[#B65F43] transition-colors text-left flex items-center gap-1.5"
-                >
-                  <Landmark className="w-3.5 h-3.5 text-[#B65F43]" />
-                  <span>Explore Sites</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
                   onClick={() => onNavigate?.('graph')}
                   className="hover:text-[#B65F43] transition-colors text-left flex items-center gap-1.5"
                 >
                   <Network className="w-3.5 h-3.5 text-[#B65F43]" />
                   <span>Knowledge Graph</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.('explore')}
+                  className="hover:text-[#B65F43] transition-colors text-left flex items-center gap-1.5"
+                >
+                  <Landmark className="w-3.5 h-3.5 text-[#B65F43]" />
+                  <span>Explore Sites</span>
                 </button>
               </li>
               <li>
@@ -79,16 +79,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#B65F43]" />
                   <span>AI Research</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.('map')}
-                  className="hover:text-[#B65F43] transition-colors text-left flex items-center gap-1.5"
-                >
-                  <MapPin className="w-3.5 h-3.5 text-[#B65F43]" />
-                  <span>Heritage Map</span>
                 </button>
               </li>
               <li>

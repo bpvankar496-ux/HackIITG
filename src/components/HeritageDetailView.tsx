@@ -16,7 +16,7 @@ interface HeritageDetailViewProps {
 export const HeritageDetailView: React.FC<HeritageDetailViewProps> = ({
   slug,
   onBack,
-  onNavigateToGraph
+  onNavigateToGraph,
 }) => {
   const site = SEED_HERITAGE_SITES.find(s => s.slug === slug);
 

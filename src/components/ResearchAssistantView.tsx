@@ -22,6 +22,7 @@ import {
   Layers,
   ArrowRight,
   Search,
+  Network,
 } from 'lucide-react';
 import {
   ArchivalCitation,
@@ -30,8 +31,7 @@ import {
 } from '../utils/researchAssistant';
 import { DocumentRecord, DocumentType } from '../types/database.types';
 import { DocumentDetailModal } from './DocumentDetailModal';
-
-import { Network, Landmark } from 'lucide-react';
+import { getAuthHeaders } from '../lib/supabase';
 
 interface ResearchAssistantViewProps {
   onNavigateToExplorer?: () => void;
@@ -97,7 +97,7 @@ export const ResearchAssistantView: React.FC<ResearchAssistantViewProps> = ({
 
     try {
       // Fetch documents list to find the record
-      const res = await fetch('/api/documents');
+      const res = await fetch('/api/documents', { headers: await getAuthHeaders() });
       const data = await res.json();
       if (data.ok && Array.isArray(data.documents)) {
         const found = data.documents.find((d: DocumentRecord) => d.id === citation.documentId);
@@ -174,7 +174,7 @@ export const ResearchAssistantView: React.FC<ResearchAssistantViewProps> = ({
 
       const res = await fetch('/api/archive/assistant', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
         body: JSON.stringify({
           question: validation.cleanQuery,
           conversationHistory,

@@ -45,9 +45,29 @@ export interface SearchExecutionResponse {
   totalDocumentsMatched: number;
   query: string;
   filters: SearchFilters;
-  source: 'supabase_postgres_fts' | 'local_search_engine';
+  source: 'supabase_postgres_fts' | 'supabase_deterministic' | 'local_search_engine';
   executionMs: number;
+  hasMore: boolean;
+  warning?: string;
   error?: string | null;
+}
+
+async function loadRemoteTable(table: 'documents' | 'document_pages'): Promise<any[]> {
+  const client = getSupabaseServiceClient();
+  const batchSize = 500;
+  const rows: any[] = [];
+
+  for (let offset = 0; ; offset += batchSize) {
+    const { data, error } = await client
+      .from(table)
+      .select('*')
+      .order('id', { ascending: true })
+      .range(offset, offset + batchSize - 1);
+    if (error) throw error;
+    const batch = Array.isArray(data) ? data : [];
+    rows.push(...batch);
+    if (batch.length < batchSize) return rows;
+  }
 }
 
 /**
@@ -57,10 +77,12 @@ export interface SearchExecutionResponse {
 export async function searchArchivalPassages(
   filters: SearchFilters,
   limit: number = 30,
-  offset: number = 0
+  offset: number = 0,
+  viewerUserId: string | null = null
 ): Promise<SearchExecutionResponse> {
   const startTime = Date.now();
   const query = (filters.query || '').trim();
+  let rpcUnavailable = false;
 
   try {
     const client = getSupabaseServiceClient();
@@ -73,8 +95,9 @@ export async function searchArchivalPassages(
       filter_location: filters.location || 'all',
       filter_language: filters.language || 'all',
       filter_verification: filters.verificationStatus || 'all',
-      limit_val: limit,
+      limit_val: limit + 1,
       offset_val: offset,
+      viewer_user_id: viewerUserId,
     });
 
     const timeoutPromise = new Promise<{ data: null; error: any }>((_, reject) =>
@@ -86,8 +109,9 @@ export async function searchArchivalPassages(
       timeoutPromise,
     ])) as any;
 
-    if (!rpcError && Array.isArray(rpcData)) {
-      const results: ArchivePassageResult[] = rpcData.map((row: any) => ({
+    if (!rpcError && Array.isArray(rpcData) && (rpcData.length > 0 || readLocalDocs().length === 0)) {
+      const hasMore = rpcData.length > limit;
+      const results: ArchivePassageResult[] = rpcData.slice(0, limit).map((row: any) => ({
         passageId: row.passage_id,
         documentId: row.document_id,
         pageNumber: row.page_number,
@@ -112,21 +136,62 @@ export async function searchArchivalPassages(
 
       return {
         results,
-        totalPassagesMatched: results.length,
+        totalPassagesMatched: offset + results.length,
         totalDocumentsMatched: uniqueDocs.size,
         query,
         filters,
         source: 'supabase_postgres_fts',
         executionMs: Date.now() - startTime,
+        hasMore,
       };
     }
+    rpcUnavailable = true;
+    if (rpcError) console.warn('PostgreSQL FTS unavailable or pending migration:', rpcError.message);
   } catch (err: any) {
+    rpcUnavailable = true;
     console.warn('PostgreSQL FTS unavailable or pending migration:', err.message);
   }
 
-  // 2. Fallback search engine over available records
-  const allDocs = readLocalDocs();
-  const allPages = readLocalPages();
+  // 2. If FTS is unavailable, search the database corpus before using local files.
+  const localDocs = readLocalDocs();
+  const localPages = readLocalPages();
+  let allDocs = localDocs;
+  let allPages = localPages;
+  let source: SearchExecutionResponse['source'] = 'local_search_engine';
+  let warning = rpcUnavailable
+    ? 'PostgreSQL full-text search is unavailable; using deterministic fallback search.'
+    : 'PostgreSQL full-text search found no matching passages; checking the database and local archive with deterministic search.';
+  try {
+    const [remoteDocs, remotePages] = await Promise.all([
+      loadRemoteTable('documents'),
+      loadRemoteTable('document_pages'),
+    ]);
+    const mergedDocs = new Map<string, DocumentRecord>();
+    remoteDocs.forEach((doc) => mergedDocs.set(doc.id, doc));
+    localDocs.forEach((doc) => {
+      if (!mergedDocs.has(doc.id)) mergedDocs.set(doc.id, doc);
+    });
+    allDocs = Array.from(mergedDocs.values()).filter(
+      (doc) => doc.verification_status !== 'unverified' || doc.created_by === viewerUserId
+    );
+
+    const mergedPages = new Map<string, DocumentPageRecord>();
+    remotePages.forEach((page) => mergedPages.set(`${page.document_id}:${page.page_number}`, page));
+    localPages.forEach((page) => {
+      const key = `${page.document_id}:${page.page_number}`;
+      if (!mergedPages.has(key)) mergedPages.set(key, page);
+    });
+    allPages = Array.from(mergedPages.values());
+    source = remoteDocs.length || remotePages.length ? 'supabase_deterministic' : 'local_search_engine';
+    warning = rpcUnavailable
+      ? 'PostgreSQL full-text search is unavailable; searching database and local archive records with deterministic search.'
+      : 'PostgreSQL full-text search found no matching passages; checking the database and local archive with deterministic search.';
+  } catch (err: any) {
+    if (rpcUnavailable) {
+      console.warn('Database fallback search unavailable:', err.message);
+      warning = 'Database search is unavailable; showing the local archive only.';
+    }
+  }
 
   const docsMap = new Map<string, DocumentRecord>();
   allDocs.forEach((d) => docsMap.set(d.id, d));
@@ -136,6 +201,7 @@ export async function searchArchivalPassages(
   for (const page of allPages) {
     const doc = docsMap.get(page.document_id);
     if (!doc) continue;
+    if (page.extraction_status !== 'completed' && page.extraction_status !== 'needs_review') continue;
 
     // Check query match across page text and document metadata
     const score = calculateRelevanceScore(
@@ -207,14 +273,21 @@ export async function searchArchivalPassages(
     }
   }
 
+  // Never surface unverified records unless their authenticated owner is viewing them.
+  const visibleResults = candidateResults.filter((result) => {
+    if (result.verificationStatus !== 'unverified') return true;
+    const doc = docsMap.get(result.documentId);
+    return Boolean(viewerUserId && doc?.created_by === viewerUserId);
+  });
+
   // Apply filters
-  const filtered = applyArchiveFilters(candidateResults, filters);
+  const filtered = applyArchiveFilters(visibleResults, filters);
 
   // Sort by relevance score descending
   filtered.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
   const paginated = filtered.slice(offset, offset + limit);
-  const matchedDocs = new Set(paginated.map((p) => p.documentId));
+  const matchedDocs = new Set(filtered.map((p) => p.documentId));
 
   return {
     results: paginated,
@@ -222,7 +295,9 @@ export async function searchArchivalPassages(
     totalDocumentsMatched: matchedDocs.size,
     query,
     filters,
-    source: 'local_search_engine',
+    source,
     executionMs: Date.now() - startTime,
+    hasMore: offset + limit < filtered.length,
+    warning,
   };
 }

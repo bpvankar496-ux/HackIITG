@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ExternalLink, ArrowRight, ArrowLeft, CheckCircle2, Clock, BookOpen, Quote } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, CheckCircle2, Clock, BookOpen, Quote } from 'lucide-react';
 import { HeritageEntity, HeritageRelationship } from '../../types/knowledgeGraph';
 import { ENTITY_COLORS, getEntityIcon } from './GraphLegend';
 
@@ -124,8 +124,7 @@ export const EntityDetailsPanel: React.FC<EntityDetailsPanelProps> = ({
               type="button"
               className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#B65F43] hover:bg-[#9A4B32] text-white text-xs font-medium rounded transition-colors shadow-xs"
             >
-              <span>Explore</span>
-              <ExternalLink className="w-3 h-3" />
+              <span>Details</span>
             </button>
           </div>
         )}

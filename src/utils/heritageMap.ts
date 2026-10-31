@@ -4,6 +4,8 @@
  */
 
 import type { DocumentRecord, DocumentType, VerificationStatus } from '../types/database.types.ts';
+import type { HeritageSiteItem } from '../types/heritage.ts';
+import { calculateGpsDistance } from './heritageLogic.ts';
 
 export interface MapFilters {
   query?: string;
@@ -42,6 +44,102 @@ export function validateCoordinates(lat: unknown, lng: unknown): boolean {
     return false;
   }
   return true;
+}
+
+/**
+ * Joins a document to a monument only when its own metadata names that site and
+ * its recorded coordinates are within 100 m. The document coordinates remain
+ * untouched; this is a display relationship, not a coordinate correction.
+ */
+export function isDocumentAtHeritageSite(
+  document: Pick<DocumentRecord, 'title' | 'description' | 'location_name' | 'latitude' | 'longitude'>,
+  site: HeritageSiteItem,
+  maxDistanceMeters: number = 100
+): boolean {
+  if (!validateCoordinates(document.latitude, document.longitude) || !validateCoordinates(site.lat, site.lng)) {
+    return false;
+  }
+
+  const distanceMeters = calculateGpsDistance(
+    document.latitude!,
+    document.longitude!,
+    site.lat!,
+    site.lng!
+  );
+  if (distanceMeters === 0) return true;
+  if (distanceMeters > maxDistanceMeters) return false;
+
+  const documentText = [document.title, document.description, document.location_name]
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase();
+  const documentTokens = new Set(documentText.split(/[^\p{L}\p{N}]+/u));
+  const siteNames = [site.name, ...(site.alternateNames || [])];
+
+  return siteNames.some((name) => {
+    const tokens = name
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((token) => token.length >= 3);
+    return tokens.length > 0 && tokens.every((token) => documentTokens.has(token));
+  });
+}
+
+/** Explains exactly why a record cannot be plotted without guessing its location. */
+export function getCoordinateIssueReason(lat: unknown, lng: unknown): string {
+  const missingLatitude = lat === null || lat === undefined || lat === '';
+  const missingLongitude = lng === null || lng === undefined || lng === '';
+
+  if (missingLatitude && missingLongitude) return 'Latitude and longitude are missing.';
+  if (missingLatitude) return 'Latitude is missing.';
+  if (missingLongitude) return 'Longitude is missing.';
+
+  const invalidLatitude =
+    typeof lat !== 'number' || !Number.isFinite(lat) || lat < -90 || lat > 90;
+  const invalidLongitude =
+    typeof lng !== 'number' || !Number.isFinite(lng) || lng < -180 || lng > 180;
+
+  if (invalidLatitude && invalidLongitude) return 'Latitude and longitude are invalid.';
+  if (invalidLatitude) return 'Latitude is invalid (expected -90 to 90).';
+  if (invalidLongitude) return 'Longitude is invalid (expected -180 to 180).';
+  return 'Coordinates are valid.';
+}
+
+/** Groups projected map points that would overlap at the current zoom level. */
+export function clusterProjectedPoints<T extends { x: number; y: number }>(
+  points: T[],
+  radiusPx: number = 44
+): T[][] {
+  const parents = points.map((_, index) => index);
+  const find = (index: number): number => {
+    if (parents[index] !== index) parents[index] = find(parents[index]);
+    return parents[index];
+  };
+  const join = (left: number, right: number) => {
+    const leftRoot = find(left);
+    const rightRoot = find(right);
+    if (leftRoot !== rightRoot) parents[rightRoot] = leftRoot;
+  };
+  const threshold = radiusPx * radiusPx;
+
+  for (let left = 0; left < points.length; left += 1) {
+    for (let right = left + 1; right < points.length; right += 1) {
+      const dx = points[left].x - points[right].x;
+      const dy = points[left].y - points[right].y;
+      if (dx * dx + dy * dy <= threshold) join(left, right);
+    }
+  }
+
+  const groups = new Map<number, T[]>();
+  points.forEach((point, index) => {
+    const root = find(index);
+    groups.set(root, [...(groups.get(root) || []), point]);
+  });
+  return Array.from(groups.values());
 }
 
 /**

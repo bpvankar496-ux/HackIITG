@@ -22,6 +22,18 @@ import type {
 const LOCAL_VAULT_FILE = path.resolve(process.cwd(), 'data/documents_vault.json');
 const LOCAL_PAGES_VAULT_FILE = path.resolve(process.cwd(), 'data/document_pages_vault.json');
 
+export interface SourceAssetAvailability {
+  available: boolean;
+  reason?: 'missing' | 'storage_unavailable';
+}
+
+function isMissingStorageObject(error: { message?: string } | null | undefined): boolean {
+  // Do not treat every "not found" response as a missing document. For example,
+  // a missing/misconfigured bucket also returns a not-found style message and
+  // should remain distinguishable from a record whose source binary is absent.
+  return /object not found/i.test(error?.message || '');
+}
+
 // Ensure local vault directory exists
 function ensureLocalVaultDir() {
   const dir = path.dirname(LOCAL_VAULT_FILE);
@@ -220,7 +232,7 @@ export async function uploadDocumentRecord(
  */
 export async function listAllDocuments(): Promise<{
   documents: DocumentRecord[];
-  source: 'supabase_postgres' | 'local_vault';
+  source: 'supabase_postgres' | 'local_vault' | 'supabase_and_local';
   error?: string | null;
 }> {
   try {
@@ -231,7 +243,22 @@ export async function listAllDocuments(): Promise<{
       .order('created_at', { ascending: false });
 
     if (!error && Array.isArray(data)) {
-      return { documents: data as DocumentRecord[], source: 'supabase_postgres' };
+      const remoteDocuments = data as DocumentRecord[];
+      const localDocuments = readLocalVault();
+      const byId = new Map(remoteDocuments.map((document) => [document.id, document]));
+      localDocuments.forEach((document) => {
+        if (!byId.has(document.id)) byId.set(document.id, document);
+      });
+      const documents = Array.from(byId.values()).sort((left, right) =>
+        right.created_at.localeCompare(left.created_at)
+      );
+
+      return {
+        documents,
+        source: localDocuments.length
+          ? remoteDocuments.length ? 'supabase_and_local' : 'local_vault'
+          : 'supabase_postgres',
+      };
     }
 
     // Fallback to local vault if table is pending in Supabase
@@ -241,9 +268,13 @@ export async function listAllDocuments(): Promise<{
       source: 'local_vault',
       error: error ? error.message : null,
     };
-  } catch {
+  } catch (err: any) {
     const local = readLocalVault();
-    return { documents: local, source: 'local_vault' };
+    return {
+      documents: local,
+      source: 'local_vault',
+      error: err?.message || 'Supabase document query failed.',
+    };
   }
 }
 
@@ -260,6 +291,9 @@ export async function createDocumentSignedUrl(
       .from('historical_archives')
       .createSignedUrl(storagePath, expiresInSeconds);
 
+    if (isMissingStorageObject(error)) {
+      return { error: 'The original source file is unavailable in archive storage.' };
+    }
     if (error) {
       return { error: `Failed to create signed URL: ${error.message}` };
     }
@@ -267,6 +301,27 @@ export async function createDocumentSignedUrl(
     return { signedUrl: data.signedUrl };
   } catch (err: any) {
     return { error: err.message || 'Error generating secure preview link.' };
+  }
+}
+
+/**
+ * Checks whether the original binary exists before exposing OCR or preview actions.
+ * A signed URL is created only for the check and is immediately discarded.
+ */
+export async function getDocumentSourceAvailability(
+  storagePath: string
+): Promise<SourceAssetAvailability> {
+  try {
+    const client = getSupabaseServiceClient();
+    const { error } = await client.storage
+      .from('historical_archives')
+      .createSignedUrl(storagePath, 60);
+
+    if (!error) return { available: true };
+    if (isMissingStorageObject(error)) return { available: false, reason: 'missing' };
+    return { available: false, reason: 'storage_unavailable' };
+  } catch {
+    return { available: false, reason: 'storage_unavailable' };
   }
 }
 
@@ -352,6 +407,9 @@ export async function downloadDocumentBuffer(
       .from('historical_archives')
       .download(storagePath);
 
+    if (isMissingStorageObject(error)) {
+      return { error: 'The original source file is unavailable in archive storage.' };
+    }
     if (error || !data) {
       return { error: `Storage download failed: ${error?.message || 'Object not found'}` };
     }

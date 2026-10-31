@@ -19,6 +19,7 @@ export interface AssistantQueryPayload {
   question: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   filters?: SearchFilters;
+  viewerUserId?: string | null;
 }
 
 export interface AssistantQueryResponse {
@@ -71,7 +72,8 @@ export async function executeArchivalAssistantInquiry(
       verificationStatus: payload.filters?.verificationStatus || 'all',
     },
     8,
-    0
+    0,
+    payload.viewerUserId || null
   );
 
   const matchedPassages = searchResult.results || [];

@@ -248,19 +248,23 @@ export async function processDocumentExtraction(documentId: string): Promise<{
       return { success: false, documentId, error: 'Document not found.' };
     }
 
-    // 2. Set status to processing
-    await updateDocumentStatus(documentId, 'processing');
-
-    // 3. Download the private file from Supabase Storage
+    // 2. Download the private file from Supabase Storage before changing the
+    // record status. A legacy metadata record can legitimately have no source
+    // binary; that is not an OCR failure and should not overwrite an existing
+    // completed/needs-review state with "failed".
     const { buffer, error: dlError } = await downloadDocumentBuffer(doc.storage_path);
     if (dlError || !buffer) {
-      await updateDocumentStatus(documentId, 'failed');
       return {
         success: false,
         documentId,
-        error: `Failed to retrieve document binary from storage: ${dlError || 'Buffer empty'}`,
+        error: dlError === 'The original source file is unavailable in archive storage.'
+          ? 'OCR cannot run because the original source file is unavailable in archive storage.'
+          : `Failed to retrieve document binary from storage: ${dlError || 'Buffer empty'}`,
       };
     }
+
+    // 3. The source is readable, so this is now a genuine extraction job.
+    await updateDocumentStatus(documentId, 'processing');
 
     let pagesToSave: DocumentPageInsertInput[] = [];
     let chosenMethod: ExtractionMethod = 'gemini_multimodal_ocr';

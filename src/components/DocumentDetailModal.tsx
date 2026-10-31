@@ -24,15 +24,24 @@ import {
   Layers,
   HelpCircle,
 } from 'lucide-react';
-import { DocumentRecord, DocumentPageRecord } from '../types/database.types';
+import { DocumentRecord, DocumentPageRecord, ProcessingStatus } from '../types/database.types';
 import { formatBytes } from '../utils/uploadValidation';
+import { getAuthHeaders } from '../lib/supabase';
 
 interface DocumentDetailModalProps {
   document: DocumentRecord | null;
   initialPageNumber?: number;
   onClose: () => void;
-  onStatusUpdated?: () => void;
+  onStatusUpdated?: (documentId: string, status: ProcessingStatus) => void;
 }
+
+type SourceAssetAvailability = {
+  available: boolean;
+  reason?: 'missing' | 'storage_unavailable';
+};
+
+const isMissingSourceError = (message: string): boolean =>
+  /original source file is unavailable in archive storage|object not found/i.test(message);
 
 export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   document,
@@ -48,6 +57,8 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const [pages, setPages] = useState<DocumentPageRecord[]>([]);
   const [selectedPageNum, setSelectedPageNum] = useState<number>(initialPageNumber);
   const [loadingPages, setLoadingPages] = useState<boolean>(false);
+  const [pageLoadError, setPageLoadError] = useState<string | null>(null);
+  const [sourceAsset, setSourceAsset] = useState<SourceAssetAvailability | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [copiedPage, setCopiedPage] = useState<boolean>(false);
@@ -58,6 +69,11 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   useEffect(() => {
     if (document) {
       setCurrentStatus(document.processing_status);
+      setPages([]);
+      setSourceAsset(null);
+      setSignedUrl(null);
+      setUrlError(null);
+      setProcessingError(null);
       fetchDocumentPages(document.id);
       setSelectedPageNum(initialPageNumber);
     }
@@ -65,21 +81,32 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 
   const fetchDocumentPages = async (docId: string) => {
     setLoadingPages(true);
-    setProcessingError(null);
+    setPageLoadError(null);
     try {
-      const res = await fetch(`/api/documents/pages?documentId=${docId}`);
+      const res = await fetch(`/api/documents/pages?documentId=${encodeURIComponent(docId)}`, {
+        headers: await getAuthHeaders(),
+      });
       const data = await res.json();
-      if (res.ok && data.ok) {
-        setPages(data.pages || []);
-        if (data.document?.processing_status) {
-          setCurrentStatus(data.document.processing_status);
-        }
-        if (data.pages?.length > 0) {
-          setSelectedPageNum(1);
-        }
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `Page request failed (${res.status}).`);
+      }
+      const loadedPages: DocumentPageRecord[] = Array.isArray(data.pages) ? data.pages : [];
+      setPages(loadedPages);
+      if (data.sourceAsset && typeof data.sourceAsset.available === 'boolean') {
+        setSourceAsset(data.sourceAsset as SourceAssetAvailability);
+      }
+      if (data.document?.processing_status) setCurrentStatus(data.document.processing_status);
+      if (loadedPages.length > 0) {
+        setSelectedPageNum(
+          loadedPages.some((page) => page.page_number === initialPageNumber)
+            ? initialPageNumber
+            : loadedPages[0].page_number
+        );
       }
     } catch (err: any) {
-      console.warn('Could not fetch pages:', err.message);
+      setPages([]);
+      setPageLoadError(err.message || 'Could not load folio pages.');
+      setSourceAsset({ available: false, reason: 'storage_unavailable' });
     } finally {
       setLoadingPages(false);
     }
@@ -87,13 +114,23 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 
   const handleRunOcrExtraction = async () => {
     if (!document) return;
+    if (sourceAsset?.reason === 'missing') {
+      setProcessingError(
+        'OCR cannot run because the original source file is unavailable in archive storage.'
+      );
+      return;
+    }
+    if (!sourceAsset) {
+      setProcessingError('The original source file is still being checked. Please wait a moment and try again.');
+      return;
+    }
     setIsProcessing(true);
     setProcessingError(null);
 
     try {
       const res = await fetch('/api/documents/process', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
         body: JSON.stringify({ documentId: document.id }),
       });
 
@@ -102,14 +139,26 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         throw new Error(data.error || 'Text extraction and OCR pipeline failed.');
       }
 
-      setPages(data.pages || []);
+      const processedPages: DocumentPageRecord[] = Array.isArray(data.pages) ? data.pages : [];
+      setPages(processedPages);
       setSelectedPageNum(1);
-      setCurrentStatus('completed');
-      if (onStatusUpdated) onStatusUpdated();
+      const status: ProcessingStatus = processedPages.some(
+        (page: DocumentPageRecord) => page.extraction_status === 'needs_review'
+      )
+        ? 'needs_review'
+        : 'completed';
+      setCurrentStatus(status);
+      onStatusUpdated?.(document.id, status);
     } catch (err: any) {
-      setProcessingError(err.message || 'Error executing OCR pipeline.');
+      const message = err.message || 'Error executing OCR pipeline.';
+      if (isMissingSourceError(message)) {
+        setSourceAsset({ available: false, reason: 'missing' });
+        setProcessingError(null);
+        return;
+      }
+      setProcessingError(message);
       setCurrentStatus('failed');
-      if (onStatusUpdated) onStatusUpdated();
+      onStatusUpdated?.(document.id, 'failed');
     } finally {
       setIsProcessing(false);
     }
@@ -117,13 +166,23 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 
   const handleRequestSignedUrl = async () => {
     if (!document) return;
+    if (sourceAsset?.reason === 'missing') {
+      setUrlError(
+        'The original source file is unavailable in archive storage.'
+      );
+      return;
+    }
+    if (!sourceAsset) {
+      setUrlError('The original source file is still being checked. Please wait a moment and try again.');
+      return;
+    }
     setLoadingUrl(true);
     setUrlError(null);
 
     try {
       const res = await fetch('/api/documents/signed-url', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
         body: JSON.stringify({
           storagePath: document.storage_path,
           expiresInSeconds: 300, // 5 minutes
@@ -137,7 +196,14 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 
       setSignedUrl(data.signedUrl);
     } catch (err: any) {
-      setUrlError(err.message || 'Error creating signed access URL.');
+      const message = err.message || 'Error creating signed access URL.';
+      if (isMissingSourceError(message)) {
+        setSourceAsset({ available: false, reason: 'missing' });
+        setSignedUrl(null);
+        setUrlError(null);
+        return;
+      }
+      setUrlError(message);
     } finally {
       setLoadingUrl(false);
     }
@@ -153,6 +219,11 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 
   const isImage = document.mime_type.startsWith('image/');
   const activePage = pages.find((p) => p.page_number === selectedPageNum) || pages[0];
+  const sourceCheckPending = sourceAsset === null;
+  const sourceIsMissing = sourceAsset?.reason === 'missing';
+  const sourceUnavailableMessage = sourceAsset?.reason === 'missing'
+    ? 'The original scan is not stored in the archive bucket. Existing transcribed folios remain available below, but preview and OCR cannot run for this record.'
+    : 'Archive storage could not be reached to verify the original source file. You can try OCR or preview again when the connection is restored.';
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -213,7 +284,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             </span>
             <span className="text-[#8E8A81]">&bull;</span>
             {getStatusBadge(currentStatus)}
-            <span className="text-[#8E8A81]">&bull;</span>
             <span className="text-[#6B6860]">
               {document.verification_status === 'verified'
                 ? 'Verified Record'
@@ -244,29 +314,35 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </p>
             </div>
 
-            <button
-              type="button"
-              disabled={isProcessing}
-              onClick={handleRunOcrExtraction}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#B38E46] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#9F7628] transition-all disabled:opacity-50"
-            >
-              {isProcessing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Extracting Inscriptions…</span>
-                </>
-              ) : pages.length > 0 ? (
-                <>
-                  <RefreshCw className="h-4 w-4" />
-                  <span>Re-run OCR Pipeline</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  <span>Run Text Extraction &amp; OCR</span>
-                </>
-              )}
-            </button>
+            {sourceCheckPending ? (
+              <span className="text-xs text-[#8E8A81]">Checking original source…</span>
+            ) : sourceIsMissing ? (
+              <span className="text-xs text-[#8E8A81]">Original source unavailable</span>
+            ) : (
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={handleRunOcrExtraction}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#B38E46] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#9F7628] transition-all disabled:opacity-50"
+              >
+                {isProcessing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Extracting Inscriptions…</span>
+                  </>
+                ) : pages.length > 0 ? (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    <span>Re-run OCR Pipeline</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    <span>Run Text Extraction &amp; OCR</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {processingError && (
@@ -276,6 +352,20 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 <strong>Pipeline Error: </strong>
                 <span>{processingError}</span>
               </div>
+            </div>
+          )}
+
+          {pageLoadError && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800" role="alert">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div><strong>Page loading failed: </strong>{pageLoadError}</div>
+            </div>
+          )}
+
+          {sourceAsset && !sourceAsset.available && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900" role="status">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{sourceUnavailableMessage}</span>
             </div>
           )}
 
@@ -406,9 +496,21 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             </div>
           ) : (
             <div className="mt-3 rounded-lg border border-dashed border-[#C9BBA2] bg-[#FAF8F5] p-4 text-center text-xs text-[#8E8A81]">
-              <p>This document has not been transcribed yet.</p>
+              <p className="font-medium text-[#6B6860]">
+                {sourceAsset?.reason === 'missing'
+                  ? 'The original source file is unavailable, so OCR cannot be run for this record.'
+                  : currentStatus === 'completed' || currentStatus === 'needs_review'
+                  ? 'No folio page records are available for this document.'
+                  : currentStatus === 'failed'
+                  ? 'Text extraction failed before page records were saved.'
+                  : 'This document has not been transcribed yet.'}
+              </p>
               <p className="mt-0.5 text-[11px]">
-                Click <strong>Run Text Extraction &amp; OCR</strong> above to extract textual inscriptions and epigraphs.
+                {sourceAsset?.reason === 'missing'
+                  ? 'Upload the authentic original scan through Deposit Folio to create a new OCR-ready record.'
+                  : currentStatus === 'completed' || currentStatus === 'needs_review'
+                  ? 'The catalogue metadata exists, but no extracted folio content is stored. No page content is inferred.'
+                  : 'Click Run Text Extraction & OCR above to process the original document.'}
               </p>
             </div>
           )}
@@ -427,11 +529,17 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           </div>
 
           <p className="mt-1.5 text-[11px] text-[#6B6860] leading-relaxed">
-            This historical asset is protected in private cloud storage. To view or download, generate a short-lived cryptographically signed URL (valid for 5 minutes).
+            {!sourceCheckPending && !sourceIsMissing
+              ? 'This historical asset is protected in private cloud storage. To view or download, generate a short-lived cryptographically signed URL (valid for 5 minutes).'
+              : sourceIsMissing
+              ? 'No original binary is stored for this legacy archive record, so a preview link cannot be created.'
+              : sourceCheckPending
+              ? 'Checking whether the original binary is available in private archive storage.'
+              : 'Archive storage could not be reached. You can try generating a preview link again.'}
           </p>
 
           <div className="mt-3 flex items-center gap-3">
-            {!signedUrl ? (
+            {!sourceCheckPending && !sourceIsMissing && !signedUrl ? (
               <button
                 type="button"
                 disabled={loadingUrl}
@@ -450,7 +558,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                   </>
                 )}
               </button>
-            ) : (
+            ) : !sourceCheckPending && !sourceIsMissing && signedUrl ? (
               <div className="flex items-center gap-3">
                 <a
                   href={signedUrl}
@@ -469,7 +577,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                   Regenerate Link
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
 
           {urlError && (

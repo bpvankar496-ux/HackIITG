@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { X, Sparkles, UploadCloud, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 import { ArchivalDocument } from '../types';
+import { getAuthHeaders } from '../lib/supabase';
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
@@ -13,27 +14,12 @@ interface DocumentUploadModalProps {
   onDocumentAdded: (doc: ArchivalDocument) => void;
 }
 
-const SAMPLE_ARCHIVE_PLATES = [
-  {
-    id: 'sample-1',
-    name: '1888 Colonial Survey Plate: Somnath & Junagadh',
-    url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
-    description: 'Field notes and architectural drawings of western coastal fortifications.',
-  },
-  {
-    id: 'sample-2',
-    name: 'Sanskrit Palm-Leaf Inscription: Patan Hydraulic Works',
-    url: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80',
-    description: 'Medieval Sanskrit epigraph on royal stepwell endowments in Patan.',
-  },
-];
-
 export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   isOpen,
   onClose,
   onDocumentAdded,
 }) => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(SAMPLE_ARCHIVE_PLATES[0].url);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -72,24 +58,13 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
     try {
       let b64ToSend = imageBase64;
 
-      // If a sample plate URL is chosen without local file upload, fetch and convert to base64
-      if (!b64ToSend && selectedImage) {
-        const resp = await fetch(selectedImage);
-        const blob = await resp.blob();
-        b64ToSend = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-      }
-
       if (!b64ToSend) {
-        throw new Error('Please select or upload an archival plate image.');
+        throw new Error('Upload the original archival scan before starting OCR.');
       }
 
       const res = await fetch('/api/archive/ocr', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
         body: JSON.stringify({ imageBase64: b64ToSend }),
       });
 
@@ -109,8 +84,10 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   const handleSaveToArchive = () => {
     if (!extractedResult) return;
 
+    const documentId = `doc-${crypto.randomUUID()}`;
+
     const newDoc: ArchivalDocument = {
-      id: `doc-${Date.now()}`,
+      id: documentId,
       slug: (extractedResult.title || 'archival-doc')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
@@ -121,17 +98,17 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       period_date: extractedResult.periodOrEra,
       original_language: extractedResult.scriptLanguage,
       source_archive: 'Digitised via Virasat Quest Ingestion Pipeline',
-      license: 'Public Archival Access',
-      original_scan_url: selectedImage || SAMPLE_ARCHIVE_PLATES[0].url,
+      license: 'Unspecified; source and reuse terms require review',
+      original_scan_url: selectedImage || '',
       transcription_status: 'ocr_extracted',
       total_pages: 1,
       summary: extractedResult.summary,
-      historical_context: `Digitized using Gemini 2.5 Multi-Modal OCR from uploaded historical manuscript plate.`,
+      historical_context: 'Transcribed from an uploaded image using the configured Gemini OCR service; human source verification is pending.',
       created_at: new Date().toISOString(),
       passages: [
         {
-          id: `p-${Date.now()}`,
-          document_id: `doc-${Date.now()}`,
+          id: `p-${crypto.randomUUID()}`,
+          document_id: documentId,
           page_number: 1,
           passage_text: extractedResult.transcription,
           key_entities: [
@@ -140,7 +117,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           ],
         },
       ],
-      related_site_slugs: ['rani-ki-vav'],
+      related_site_slugs: [],
     };
 
     onDocumentAdded(newDoc);
@@ -203,31 +180,6 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               />
             </label>
 
-            {/* Sample Plates for Instant Hackathon Demonstration */}
-            <div className="mt-3">
-              <span className="text-xs text-[#777267]">Or test with authentic historical sample:</span>
-              <div className="mt-1.5 space-y-2">
-                {SAMPLE_ARCHIVE_PLATES.map((sample) => (
-                  <button
-                    key={sample.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedImage(sample.url);
-                      setImageBase64('');
-                      setExtractedResult(null);
-                    }}
-                    className={`w-full rounded-lg border p-2.5 text-left text-xs transition-all ${
-                      selectedImage === sample.url
-                        ? 'border-[#B65F43] bg-[#B65F43]/10 font-medium'
-                        : 'border-[#DCC9AD] bg-white hover:border-[#777267]'
-                    }`}
-                  >
-                    <div className="font-semibold text-[#292821]">{sample.name}</div>
-                    <div className="text-[11px] text-[#777267]">{sample.description}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Preview Image */}
@@ -253,7 +205,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#667653] py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               <Sparkles className="h-4 w-4" />
-              <span>{isProcessing ? 'Transcribing with Gemini 2.5…' : 'Run Gemini Multi-Modal OCR'}</span>
+              <span>{isProcessing ? 'Transcribing with Gemini…' : 'Run Gemini Multi-Modal OCR'}</span>
             </button>
           </div>
         </div>

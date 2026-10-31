@@ -24,9 +24,6 @@ const DocumentUploadView = React.lazy(async () => ({
 const ResearchAssistantView = React.lazy(async () => ({
   default: (await import('./components/ResearchAssistantView')).ResearchAssistantView,
 }));
-const HeritageMapView = React.lazy(async () => ({
-  default: (await import('./components/HeritageMapView')).HeritageMapView,
-}));
 const GamesView = React.lazy(() => import('./components/GamesView'));
 const CollectionView = React.lazy(() => import('./components/CollectionView'));
 const HeritageDetailView = React.lazy(() => import('./components/HeritageDetailView'));
@@ -78,8 +75,24 @@ function VirasatQuestApp() {
   // Handle URL hash changes for deep linking and browser history navigation
   useEffect(() => {
     const handleHashChange = () => {
-      setRouteHash(window.location.hash);
       const hash = window.location.hash.replace(/^#\/?/, '');
+      const isRetiredMapRoute = hash === 'map' || hash.startsWith('map/');
+
+      // The standalone Heritage Map is retired. Keep old bookmarks useful by
+      // taking visitors to the main site explorer instead.
+      if (isRetiredMapRoute) {
+        const fallbackHash = '#explore';
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}${window.location.search}${fallbackHash}`,
+        );
+        setRouteHash(fallbackHash);
+        setCurrentSection('explore');
+        return;
+      }
+
+      setRouteHash(window.location.hash);
       if (!hash || hash === 'home' || hash === 'overview') {
         setCurrentSection('overview');
       } else if (hash.startsWith('heritage/')) {
@@ -90,7 +103,8 @@ function VirasatQuestApp() {
         const slug = hash.replace(/^(?:knowledge-graph|graph)\//, '');
         setGraphTargetSlug(slug);
         setCurrentSection('graph');
-      } else if (hash === 'knowledge-graph') {
+      } else if (hash === 'knowledge-graph' || hash === 'graph') {
+        setGraphTargetSlug(undefined);
         setCurrentSection('graph');
       } else if (hash === 'vault' || hash === 'archive') {
         setCurrentSection('explorer');
@@ -103,7 +117,6 @@ function VirasatQuestApp() {
           'graph',
           'explorer',
           'assistant',
-          'map',
           'games',
           'upload',
           'collection',
@@ -124,17 +137,28 @@ function VirasatQuestApp() {
 
   // State-directed navigation with URL hash synchronization
   const navigateTo = (section: NavSection | 'heritage-detail', slug?: string) => {
+    let nextHash = '';
+
     if (section === 'heritage-detail' && slug) {
       setActiveSiteSlug(slug);
-      window.location.hash = `heritage/${slug}`;
+      setCurrentSection('explore');
+      nextHash = `#heritage/${slug}`;
     } else if (section === 'graph') {
       setGraphTargetSlug(slug);
-      window.location.hash = slug ? `knowledge-graph/${slug}` : 'knowledge-graph';
       setCurrentSection('graph');
+      nextHash = slug ? `#knowledge-graph/${slug}` : '#knowledge-graph';
     } else {
       setCurrentSection(section as NavSection);
-      window.location.hash = section === 'overview' ? '' : section;
+      nextHash = section === 'overview' ? '' : `#${section}`;
     }
+
+    // Update React immediately; the hashchange listener remains responsible
+    // for browser back/forward navigation and direct links.
+    setRouteHash(nextHash);
+    if (window.location.hash !== nextHash) {
+      window.location.hash = nextHash;
+    }
+
     updateSavedCount();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -203,7 +227,7 @@ function VirasatQuestApp() {
               />
             )}
 
-            {/* Section 3: Heritage Knowledge Graph */}
+            {/* Heritage Knowledge Graph */}
             {currentSection === 'graph' && (
               <KnowledgeGraphRoute
                 targetEntitySlug={graphTargetSlug}
@@ -211,15 +235,14 @@ function VirasatQuestApp() {
               />
             )}
 
-            {/* Section 4: Archival Vault & Deep Passage Search */}
+            {/* Archival Vault & Deep Passage Search */}
             {currentSection === 'explorer' && (
               <ArchiveExplorerView
                 onNavigateToUpload={() => navigateTo('upload')}
-                onNavigateToMap={() => navigateTo('map')}
               />
             )}
 
-            {/* Section 5: Grounded AI Heritage Research Assistant */}
+            {/* Grounded AI Heritage Research Assistant */}
             {currentSection === 'assistant' && (
               <ResearchAssistantView
                 onNavigateToExplorer={() => navigateTo('explorer')}
@@ -229,19 +252,10 @@ function VirasatQuestApp() {
               />
             )}
 
-            {/* Section 6: Geospatial Heritage Map */}
-            {currentSection === 'map' && (
-              <HeritageMapView
-                onNavigateToExplorer={() => navigateTo('explorer')}
-                onNavigateToAssistant={() => navigateTo('assistant')}
-                onNavigateToUpload={() => navigateTo('upload')}
-              />
-            )}
-
             {/* Games: heritage quiz and Simon */}
             {currentSection === 'games' && <GamesView />}
 
-            {/* Section 7: Document Intake & Multi-Modal OCR */}
+            {/* Document Intake & Multi-Modal OCR */}
             {currentSection === 'upload' && (
               <DocumentUploadView
                 onUploadSuccess={() => {
@@ -251,7 +265,7 @@ function VirasatQuestApp() {
               />
             )}
 
-            {/* Section 8: Saved Heritage Records / Personal Collection */}
+            {/* Saved Heritage Records / Personal Collection */}
             {currentSection === 'collection' && (
               <CollectionView
                 onNavigateToSite={(slug) => navigateTo('heritage-detail', slug)}
@@ -259,7 +273,7 @@ function VirasatQuestApp() {
               />
             )}
 
-            {/* Section 9: Dedicated Authentication Views */}
+            {/* Dedicated Authentication Views */}
             {currentSection === 'login' && (
               <LoginView
                 onNavigateToSignUp={() => navigateTo('signup')}
@@ -276,10 +290,10 @@ function VirasatQuestApp() {
               />
             )}
 
-            {/* Section 10: Admin Batch Ingestion & Dataset Audit */}
+            {/* Admin Batch Ingestion & Dataset Audit */}
             {currentSection === 'admin-import' && <AdminImportView />}
 
-            {/* Section 11: Project Technical Dossier */}
+            {/* Project Technical Dossier */}
             {currentSection === 'dossier' && <ProjectDossier />}
             </>
           )}

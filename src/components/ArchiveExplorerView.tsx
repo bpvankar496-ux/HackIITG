@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
   FileText,
@@ -31,15 +31,16 @@ import {
   highlightMatchingSegments,
 } from '../utils/archiveSearch';
 import { DocumentDetailModal } from './DocumentDetailModal';
+import { getAuthHeaders } from '../lib/supabase';
+
+const SEARCH_PAGE_SIZE = 30;
 
 interface ArchiveExplorerViewProps {
   onNavigateToUpload: () => void;
-  onNavigateToMap?: () => void;
 }
 
 export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
   onNavigateToUpload,
-  onNavigateToMap,
 }) => {
   // Navigation & Modal State
   const [selectedDoc, setSelectedDoc] = useState<DocumentRecord | null>(null);
@@ -57,11 +58,14 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
   // Data State
   const [searchResults, setSearchResults] = useState<ArchivePassageResult[]>([]);
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
-  const [totalPassages, setTotalPassages] = useState<number>(0);
-  const [totalDocsMatched, setTotalDocsMatched] = useState<number>(0);
   const [searchExecutionMs, setSearchExecutionMs] = useState<number>(0);
   const [searchSource, setSearchSource] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [hasMorePassages, setHasMorePassages] = useState<boolean>(false);
+  const [paginationError, setPaginationError] = useState<string | null>(null);
+  const [searchWarning, setSearchWarning] = useState<string | null>(null);
+  const [archiveWarning, setArchiveWarning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Dynamic filter options extracted from dataset
@@ -74,10 +78,17 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
     type: DocumentType | 'all' = filterType,
     period: string = filterPeriod,
     location: string = filterLocation,
-    verification: VerificationStatus | 'all' = filterVerification
+    verification: VerificationStatus | 'all' = filterVerification,
+    offset: number = 0,
+    append: boolean = false
   ) => {
-    setLoading(true);
-    setError(null);
+    if (append) {
+      setLoadingMore(true);
+      setPaginationError(null);
+    } else {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       const params = new URLSearchParams();
@@ -86,34 +97,51 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
       if (period !== 'all') params.set('period', period);
       if (location !== 'all') params.set('location', location);
       if (verification !== 'all') params.set('verification', verification);
+      params.set('limit', String(SEARCH_PAGE_SIZE));
+      params.set('offset', String(offset));
 
-      const res = await fetch(`/api/archive/search?${params.toString()}`);
+      const res = await fetch(`/api/archive/search?${params.toString()}`, {
+        headers: await getAuthHeaders(),
+      });
       const data = await res.json();
 
       if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Failed to search archival records.');
       }
 
-      setSearchResults(data.results || []);
-      setTotalPassages(data.totalPassagesMatched || 0);
-      setTotalDocsMatched(data.totalDocumentsMatched || 0);
+      const results: ArchivePassageResult[] = Array.isArray(data.results) ? data.results : [];
+      setSearchResults((current) => append ? [...current, ...results] : results);
+      setHasMorePassages(Boolean(data.hasMore ?? results.length === SEARCH_PAGE_SIZE));
       setSearchExecutionMs(data.executionMs || 0);
       setSearchSource(data.source || '');
+      setSearchWarning(data.warning || null);
     } catch (err: any) {
-      setError(err.message || 'Error communicating with archive search engine.');
+      const message = err.message || 'Error communicating with archive search engine.';
+      if (append) setPaginationError(message);
+      else setError(message);
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
     }
   };
 
   // Initial load of documents for catalogue view & metadata facet population
   const fetchAllDocuments = async () => {
     try {
-      const res = await fetch('/api/documents');
+      const res = await fetch('/api/documents', { headers: await getAuthHeaders() });
       const data = await res.json();
-      if (res.ok && data.ok) {
+      if (res.ok && data.ok && Array.isArray(data.documents)) {
         const docs: DocumentRecord[] = data.documents || [];
         setDocuments(docs);
+        setArchiveWarning(
+          data.source === 'local_vault'
+            ? 'Supabase returned no usable document records; showing the local archive vault.'
+            : data.source === 'supabase_and_local'
+            ? 'Showing records from both Supabase and the local archive vault.'
+            : data.error
+            ? 'The archive database returned an error; some records may be in the local fallback vault.'
+            : null
+        );
 
         // Derive unique periods and locations
         const periods = Array.from(
@@ -125,8 +153,8 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
         setAvailablePeriods(periods);
         setAvailableLocations(locations);
       }
-    } catch {
-      // non-blocking
+    } catch (err: any) {
+      setArchiveWarning(err.message || 'Could not load the document catalogue.');
     }
   };
 
@@ -134,6 +162,19 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
     fetchAllDocuments();
     executeSearch('', 'all', 'all', 'all', 'all');
   }, []);
+
+  const catalogDocuments = useMemo(() => {
+    const queryTokens = activeQuery.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    return documents.filter((doc) => {
+      if (filterType !== 'all' && doc.document_type !== filterType) return false;
+      if (filterPeriod !== 'all' && doc.historical_period !== filterPeriod) return false;
+      if (filterLocation !== 'all' && doc.location_name !== filterLocation) return false;
+      if (filterVerification !== 'all' && doc.verification_status !== filterVerification) return false;
+      const haystack = [doc.title, doc.description, doc.location_name, doc.historical_period, doc.language, doc.source_name, doc.attribution]
+        .filter(Boolean).join(' ').toLocaleLowerCase();
+      return queryTokens.every((token) => haystack.includes(token));
+    });
+  }, [documents, activeQuery, filterType, filterPeriod, filterLocation, filterVerification]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,18 +270,6 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
-
-          {onNavigateToMap && (
-            <button
-              type="button"
-              onClick={onNavigateToMap}
-              className="flex items-center gap-1.5 rounded-lg border border-[#E2D7C3] bg-white px-3 py-2 text-xs font-medium text-[#16192E] hover:bg-[#F4EFE6] transition-colors"
-              title="View records on Geospatial Heritage Map"
-            >
-              <MapPin className="h-3.5 w-3.5 text-[#B38E46]" />
-              <span>Heritage Map</span>
-            </button>
-          )}
 
           <button
             type="button"
@@ -432,7 +461,7 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
             }`}
           >
             <Layers className="h-4 w-4" />
-            <span>Passage Search Results ({totalPassages})</span>
+            <span>Passage Search Results ({searchResults.length} loaded)</span>
           </button>
 
           <button
@@ -445,7 +474,7 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
             }`}
           >
             <FileText className="h-4 w-4" />
-            <span>Document Catalogue ({documents.length})</span>
+            <span>Document Catalogue ({catalogDocuments.length})</span>
           </button>
         </div>
 
@@ -455,11 +484,22 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
           )}
           {searchSource && (
             <span className="rounded bg-[#EDE5D5] px-2 py-0.5 font-mono text-[10px] text-[#6B6860]">
-              {searchSource === 'supabase_postgres_fts' ? 'PostgreSQL FTS' : 'Deterministic Search'}
+              {searchSource === 'supabase_postgres_fts'
+                ? 'PostgreSQL FTS'
+                : searchSource === 'supabase_deterministic'
+                ? 'Database deterministic fallback'
+                : 'Local deterministic fallback'}
             </span>
           )}
         </div>
       </div>
+
+      {(searchWarning || archiveWarning) && (
+        <div className="mt-4 space-y-2" aria-live="polite">
+          {searchWarning && <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">{searchWarning}</p>}
+          {archiveWarning && <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">{archiveWarning}</p>}
+        </div>
+      )}
 
       {/* Loading State */}
       {loading && (
@@ -490,7 +530,7 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
       )}
 
       {/* Empty State: No results for search query */}
-      {!loading && !error && searchResults.length === 0 && (
+      {!loading && !error && viewMode === 'passages' && searchResults.length === 0 && (
         <div className="mt-8 rounded-2xl border-2 border-dashed border-[#C9BBA2] bg-[#F4EFE6]/60 p-12 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EDE5D5] text-[#B38E46] mb-4">
             <Search className="h-7 w-7" />
@@ -607,13 +647,26 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
               </article>
             );
           })}
+          {paginationError && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">Could not load the next passage page: {paginationError}</p>}
+          {hasMorePassages && (
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                disabled={loadingMore}
+                onClick={() => executeSearch(activeQuery, filterType, filterPeriod, filterLocation, filterVerification, searchResults.length, true)}
+                className="rounded-lg border border-[#C9BBA2] bg-white px-5 py-2.5 text-xs font-semibold text-[#16192E] hover:bg-[#F4EFE6] disabled:opacity-60"
+              >
+                {loadingMore ? 'Loading passages…' : 'Load more passages'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* View Mode B: Document Catalogue Grid */}
-      {!loading && !error && viewMode === 'documents' && documents.length > 0 && (
+      {!loading && !error && viewMode === 'documents' && catalogDocuments.length > 0 && (
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {documents.map((doc) => (
+          {catalogDocuments.map((doc) => (
             <article
               key={doc.id}
               onClick={() => {
@@ -671,14 +724,25 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
         </div>
       )}
 
+      {!loading && !error && viewMode === 'documents' && catalogDocuments.length === 0 && (
+        <div className="mt-8 rounded-2xl border-2 border-dashed border-[#C9BBA2] bg-[#F4EFE6]/60 p-10 text-center">
+          <FileText className="mx-auto mb-3 h-8 w-8 text-[#B38E46]" />
+          <h2 className="font-serif text-lg font-bold text-[#16192E]">No documents match these filters</h2>
+          <p className="mt-2 text-xs text-[#6B6860]">Clear the search or filters to see all {documents.length} catalogue records.</p>
+        </div>
+      )}
+
       {/* Document Detail Modal targeted to matching page */}
       <DocumentDetailModal
         document={selectedDoc}
         initialPageNumber={targetPageNum}
         onClose={() => setSelectedDoc(null)}
-        onStatusUpdated={() => {
-          fetchAllDocuments();
-          executeSearch();
+        onStatusUpdated={(documentId, status) => {
+          setDocuments((current) => current.map((doc) =>
+            doc.id === documentId
+              ? { ...doc, processing_status: status, updated_at: new Date().toISOString() }
+              : doc
+          ));
         }}
       />
     </div>

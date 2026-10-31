@@ -11,8 +11,12 @@ import {
   filterMapRecords,
   groupRecordsByLocation,
   computeMapBounds,
+  getCoordinateIssueReason,
+  clusterProjectedPoints,
+  isDocumentAtHeritageSite,
 } from './heritageMap.ts';
 import type { DocumentRecord } from '../types/database.types.ts';
+import { SEED_HERITAGE_SITES } from '../data/seedHeritageSites.ts';
 
 const mockRecords: DocumentRecord[] = [
   {
@@ -134,6 +138,44 @@ describe('Heritage Map Pure Logic Tests', () => {
 
     const southernHemisphere = formatCoordinateDisplay(-33.8688, -70.6483);
     assert.strictEqual(southernHemisphere, '33.8688° S, 70.6483° W');
+  });
+
+  test('getCoordinateIssueReason distinguishes missing and invalid coordinates', () => {
+    assert.strictEqual(getCoordinateIssueReason(null, null), 'Latitude and longitude are missing.');
+    assert.strictEqual(getCoordinateIssueReason(undefined, 72), 'Latitude is missing.');
+    assert.strictEqual(getCoordinateIssueReason(23, undefined), 'Longitude is missing.');
+    assert.strictEqual(getCoordinateIssueReason(91, 72), 'Latitude is invalid (expected -90 to 90).');
+    assert.strictEqual(getCoordinateIssueReason(23, 181), 'Longitude is invalid (expected -180 to 180).');
+  });
+
+  test('clusterProjectedPoints groups overlapping markers and keeps distant markers selectable', () => {
+    const groups = clusterProjectedPoints([
+      { id: 'a', x: 0, y: 0 },
+      { id: 'b', x: 20, y: 10 },
+      { id: 'c', x: 300, y: 300 },
+    ], 44);
+    assert.strictEqual(groups.length, 2);
+    assert.deepStrictEqual(groups.map((group) => group.map((point) => point.id)), [['a', 'b'], ['c']]);
+  });
+
+  test('the canonical heritage dataset is fully map-ready with unique coordinates and attributed media', () => {
+    assert.strictEqual(SEED_HERITAGE_SITES.length, 42);
+    assert.ok(SEED_HERITAGE_SITES.every((site) => site.verification === 'verified'));
+    assert.ok(SEED_HERITAGE_SITES.every((site) => validateCoordinates(site.lat, site.lng)));
+    assert.ok(SEED_HERITAGE_SITES.every((site) => Boolean(site.heritage_media?.[0]?.source_url && site.heritage_media[0].alt)));
+
+    const coordinatePairs = SEED_HERITAGE_SITES.map((site) => `${site.lat},${site.lng}`);
+    assert.strictEqual(new Set(coordinatePairs).size, SEED_HERITAGE_SITES.length);
+  });
+
+  test('links a nearby document to a monument only when its metadata names that site', () => {
+    const modhera = SEED_HERITAGE_SITES.find((site) => site.slug === 'modhera-sun-temple');
+    const rani = SEED_HERITAGE_SITES.find((site) => site.slug === 'rani-ki-vav');
+    assert.ok(modhera && rani);
+    assert.strictEqual(isDocumentAtHeritageSite(mockRecords[2], modhera), true);
+    assert.strictEqual(isDocumentAtHeritageSite({ ...mockRecords[2], title: 'Unrelated record', description: 'Unrelated text', location_name: 'Other location' }, modhera), false);
+    assert.strictEqual(isDocumentAtHeritageSite(mockRecords[3], rani), false);
+    assert.strictEqual(mockRecords[2].longitude, 72.1331);
   });
 
   test('filterMapRecords separates mapped from unmapped records without guessing coordinates', () => {

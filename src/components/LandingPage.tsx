@@ -302,29 +302,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
             </div>
 
-            {/* Capability 5: Geospatial Heritage Map */}
-            <div
-              onClick={() => onNavigate('map')}
-              className="group cursor-pointer rounded-2xl border border-[#DCC9AD] bg-[#FAF7F0] p-6 space-y-3 hover:border-[#B65F43] transition-all shadow-2xs hover:shadow-md flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-[#B65F43]/15 text-[#B65F43] flex items-center justify-center">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <h3 className="font-serif text-lg font-bold text-[#292821] group-hover:text-[#B65F43] transition-colors">
-                  Geospatial Heritage Map
-                </h3>
-                <p className="text-xs text-[#777267] leading-relaxed">
-                  Interactive cartography mapping verified coordinates, clustered regions, and geolocated survey plates on OpenStreetMap tiles.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-[#DCC9AD]/40 flex items-center justify-between text-xs font-semibold text-[#B65F43]">
-                <span>Open Heritage Map</span>
-                <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-
-            {/* Capability 6: Document Ingestion & OCR */}
+            {/* Capability 5: Document Ingestion & OCR */}
             <div
               onClick={() => onNavigate('upload')}
               className="group cursor-pointer rounded-2xl border border-[#DCC9AD] bg-[#FAF7F0] p-6 space-y-3 hover:border-[#B65F43] transition-all shadow-2xs hover:shadow-md flex flex-col justify-between"
@@ -535,6 +513,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
       </section>
+
     </div>
   );
 };
