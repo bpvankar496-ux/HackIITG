@@ -114,7 +114,11 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
       setHasMorePassages(Boolean(data.hasMore ?? results.length === SEARCH_PAGE_SIZE));
       setSearchExecutionMs(data.executionMs || 0);
       setSearchSource(data.source || '');
-      setSearchWarning(data.warning || null);
+      setSearchWarning(
+        data.warning && !String(data.warning).includes('found no matching passages')
+          ? data.warning
+          : null
+      );
     } catch (err: any) {
       const message = err.message || 'Error communicating with archive search engine.';
       if (append) setPaginationError(message);
@@ -137,7 +141,7 @@ export const ArchiveExplorerView: React.FC<ArchiveExplorerViewProps> = ({
           data.source === 'local_vault'
             ? 'Supabase returned no usable document records; showing the local archive vault.'
             : data.source === 'supabase_and_local'
-            ? 'Showing records from both Supabase and the local archive vault.'
+            ? null
             : data.error
             ? 'The archive database returned an error; some records may be in the local fallback vault.'
             : null

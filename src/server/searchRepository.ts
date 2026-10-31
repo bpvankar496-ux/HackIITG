@@ -145,7 +145,7 @@ export async function searchArchivalPassages(
         hasMore,
       };
     }
-    rpcUnavailable = true;
+    rpcUnavailable = Boolean(rpcError) || !Array.isArray(rpcData);
     if (rpcError) console.warn('PostgreSQL FTS unavailable or pending migration:', rpcError.message);
   } catch (err: any) {
     rpcUnavailable = true;

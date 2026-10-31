@@ -362,7 +362,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             </div>
           )}
 
-          {sourceAsset && !sourceAsset.available && (
+          {sourceAsset && !sourceAsset.available && !sourceIsMissing && (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900" role="status">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{sourceUnavailableMessage}</span>
@@ -517,6 +517,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
         </div>
 
         {/* Secure File Access & Preview Area */}
+        {!sourceCheckPending && !sourceIsMissing && (
         <div className="mt-5 rounded-xl border border-[#E2D7C3] bg-[#FBF9F4] p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-[#16192E]">
@@ -598,6 +599,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
             </div>
           )}
         </div>
+        )}
 
         {/* Metadata Grid */}
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs">
