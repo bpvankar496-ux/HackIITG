@@ -97,7 +97,8 @@ flowchart LR
         AUTH[AuthContext]
     end
 
-    subgraph Server["⚙️ Backend: Node.js API (Vite middleware in dev, Node server in prod)"]
+    subgraph Server["⚙️ Backend: handleApi() in api.ts (Vite middleware in dev, Express server.ts in prod)"]
+        API[api.ts router<br/>auth + rate limit]
         ASSIST[assistantService]
         GEM[geminiService]
         EXTRACT[textExtractionEngine]
@@ -116,8 +117,10 @@ flowchart LR
     AUTH <--> SB
     MAP --> OSM
     UI --> WM
-    VAULT -->|/api| EXTRACT
-    CHAT -->|/api| ASSIST
+    VAULT -->|/api| API
+    CHAT -->|/api| API
+    API --> EXTRACT
+    API --> ASSIST
     EXTRACT --> GEM
     ASSIST --> SEARCH
     ASSIST --> GEM
@@ -227,65 +230,117 @@ graph LR
 
 ```text
 HackIITG/
-├── .env.example               # Template for environment variables
+├── server.ts                  # Production Express server: serves dist/ + /api routes
+├── vite.config.ts             # Vite config + dev-time /api middleware
 ├── index.html                 # App HTML entry
-├── metadata.json
-├── package.json
+├── package.json               # Scripts and dependencies (package name: virasat-quest)
 ├── tsconfig.json
-├── vite.config.ts             # Vite config + API middleware
+├── metadata.json
+├── .env.example               # Template for environment variables
+├── .gitignore
 │
-├── data/                      # Local archival fallback data
+├── data/                      # Runtime fallback vault (JSON)
 │   ├── documents_vault.json
 │   └── document_pages_vault.json
 │
-├── src/
-│   ├── App.tsx                # Root app, hash routing, lazy-loaded sections
-│   ├── main.tsx               # React entry point
-│   ├── index.css              # Tailwind entry
-│   │
-│   ├── components/            # UI views
-│   │   ├── Header.tsx · Footer.tsx · LandingPage.tsx
-│   │   ├── ExploreView.tsx · HeritageDetailView.tsx · HeritageImage.tsx
-│   │   ├── ArchiveExplorerView.tsx · DocumentUploadView.tsx · DocumentDetailModal.tsx
-│   │   ├── ResearchAssistantView.tsx · HeritageMapView.tsx
-│   │   ├── CollectionView.tsx · AdminImportView.tsx · ProjectDossier.tsx
-│   │   ├── KnowledgeGraphRoute.tsx
-│   │   ├── auth/              # LoginView, SignUpView
-│   │   └── knowledgeGraph/    # Graph canvas, legend, filters, controls,
-│   │                          # entity/relationship panels, list view,
-│   │                          # archival extraction modal
-│   │
-│   ├── contexts/AuthContext.tsx   # Session and auth state
-│   │
-│   ├── data/                  # Seed + curated datasets
-│   │   ├── authenticHeritageDataset.ts
-│   │   ├── heritageImages.ts      # Image catalog + attribution
-│   │   ├── seedHeritageSites.ts
-│   │   ├── seedKnowledgeGraph.ts
-│   │   └── archiveData.ts
-│   │
-│   ├── lib/                   # supabaseClient, supabaseAdmin, knowledgeGraphExtraction
-│   │
-│   ├── server/                # Server-side logic (secrets live here)
-│   │   ├── assistantService.ts       # RAG orchestration
-│   │   ├── geminiService.ts          # Gemini client, model fallback
-│   │   ├── textExtractionEngine.ts   # PDF vs OCR routing
-│   │   ├── documentRepository.ts     # Document persistence
-│   │   └── searchRepository.ts       # Full-text search queries
-│   │
-│   ├── types/                 # Shared TypeScript types
-│   └── utils/                 # Pure logic + co-located *.test.ts files
-│       ├── archiveSearch · graphLogic · heritageDataImporter
-│       ├── heritageLogic · heritageMap · ocrPipeline
-│       └── researchAssistant · uploadValidation
+├── supabase/                  # SQL migrations (run in this order)
+│   ├── schema.sql
+│   ├── knowledge_graph.sql
+│   ├── schema_step2_documents.sql
+│   ├── schema_step4_document_pages.sql
+│   └── schema_step5_search.sql
 │
-└── supabase/                  # SQL migrations (run in order)
-    ├── schema.sql
-    ├── knowledge_graph.sql
-    ├── schema_step2_documents.sql
-    ├── schema_step4_document_pages.sql
-    └── schema_step5_search.sql
+└── src/
+    ├── main.tsx               # React entry point
+    ├── App.tsx                # Root app, hash routing, lazy-loaded sections
+    ├── index.css              # Tailwind entry
+    │
+    ├── components/            # ── Frontend views ──
+    │   ├── LandingPage.tsx · Header.tsx · Footer.tsx · Logo.tsx · LanguageSwitcher.tsx
+    │   ├── ExploreView.tsx · HeritageDetailView.tsx · SiteDetailModal.tsx
+    │   ├── HeritageImage.tsx          # Shared image component with fallbacks
+    │   ├── HeritageMapView.tsx · LeafletMap.tsx
+    │   ├── ModelViewer3D.tsx          # Optional 3D viewer (loaded separately)
+    │   ├── ArchiveExplorerView.tsx · ArchiveViewer.tsx
+    │   ├── DocumentUploadView.tsx · DocumentUploadModal.tsx · DocumentDetailModal.tsx
+    │   ├── ResearchAssistantView.tsx
+    │   ├── CollectionView.tsx · SaveButton.tsx
+    │   ├── GamesView.tsx
+    │   ├── AdminImportView.tsx · ProjectDossier.tsx
+    │   ├── KnowledgeGraphRoute.tsx
+    │   │
+    │   ├── auth/                      # LoginView · SignUpView · GoogleButton
+    │   ├── games/                     # HeritageQuiz · SimonHeritage · useHeritagePool
+    │   ├── motion/                    # Reveal · TiltCard (animations)
+    │   └── knowledgeGraph/            # KnowledgeGraphView · InteractiveGraphCanvas ·
+    │                                  # GraphLegend · GraphFilterBar · GraphControls ·
+    │                                  # EntityDetailsPanel · RelationshipDetailsPanel ·
+    │                                  # GraphListView · ArchivalExtractionModal
+    │
+    ├── contexts/
+    │   └── AuthContext.tsx            # Session and auth state
+    │
+    ├── data/                  # ── Curated + seed datasets ──
+    │   ├── authenticHeritageDataset.ts
+    │   ├── heritageData.ts · seedHeritageSites.ts
+    │   ├── seedKnowledgeGraph.ts · archiveData.ts
+    │   └── heritageImages.ts          # Image catalog + attribution
+    │
+    ├── lib/                   # ── Client/shared helpers ──
+    │   ├── supabase.ts                # Browser Supabase client + auth headers
+    │   ├── supabaseAdmin.ts           # Service-role client (server only)
+    │   ├── savedSites.ts              # Saved-sites logic
+    │   └── knowledgeGraphExtraction.ts
+    │
+    ├── server/                # ── Backend logic (secrets live here) ──
+    │   ├── api.ts                     # Framework-neutral router: handleApi()
+    │   ├── assistantService.ts        # RAG orchestration
+    │   ├── geminiService.ts           # Gemini client
+    │   ├── geminiModels.ts            # Model names + fallback config
+    │   ├── textExtractionEngine.ts    # PDF vs OCR routing
+    │   ├── documentRepository.ts      # Document persistence
+    │   ├── searchRepository.ts        # Full-text search queries
+    │   └── rateLimit.ts               # In-memory sliding-window limiter
+    │
+    ├── types/                 # database.types · heritage · knowledgeGraph · index
+    │
+    └── utils/                 # ── Pure logic, each with a co-located *.test.ts ──
+        ├── archiveSearch · graphLogic · heritageDataImporter
+        ├── heritageLogic · heritageMap · ocrPipeline
+        └── researchAssistant · uploadValidation
 ```
+
+### Where things live
+
+| I want to change...           | Look in                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| A page or UI view             | `src/components/`                                                               |
+| Monument data or photos       | `src/data/` (`heritageImages.ts` for photos)                                    |
+| Knowledge graph data or logic | `src/data/seedKnowledgeGraph.ts`, `src/utils/graphLogic.ts`                     |
+| An API endpoint               | `src/server/api.ts`                                                             |
+| AI / OCR behaviour            | `src/server/geminiService.ts`, `textExtractionEngine.ts`, `assistantService.ts` |
+| Database tables               | `supabase/*.sql`                                                                |
+| Production server             | `server.ts`                                                                     |
+
+---
+
+## 🔌 API Reference
+
+All routes live in `src/server/api.ts` (one handler, shared by the Vite dev server and the Express production server, so dev and prod behave the same). Protected routes need `Authorization: Bearer <Supabase access token>`.
+
+| Method | Route                               | Auth | Rate limit       | Purpose                                                                                                                  |
+| ------ | ----------------------------------- | :--: | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| GET    | `/api/database/status`              |  No  | n/a              | Check database / Supabase connectivity                                                                                   |
+| GET    | `/api/documents`                    |  No  | n/a              | List archival documents                                                                                                  |
+| GET    | `/api/documents/pages?documentId=…` |  No  | n/a              | Page-level transcriptions of a document                                                                                  |
+| GET    | `/api/archive/search`               |  No  | n/a              | Full-text passage search. Query params: `q`, `type`, `period`, `location`, `language`, `verification`, `limit`, `offset` |
+| POST   | `/api/documents/upload`             | Yes  | 20 / hour / user | Upload a document (max 20 MB)                                                                                            |
+| POST   | `/api/documents/process`            | Yes  | 30 / hour / user | Extract text (PDF parse or Gemini OCR) and index pages                                                                   |
+| POST   | `/api/documents/signed-url`         | Yes  | n/a              | Short-lived signed URL (60-600 s) for a private file; allowed for the owner or any non-`unverified` document             |
+| POST   | `/api/archive/assistant`            | Yes  | 30 / hour / user | Ask the grounded research assistant                                                                                      |
+| POST   | `/api/archive/ocr`                  | Yes  | 20 / hour / user | Gemini OCR on a base64 image (`imageBase64`, `mimeType`)                                                                 |
+
+Request bodies are JSON (max 30 MB, which allows a 20 MB file encoded as base64). Unknown routes return `404`; oversized bodies return `413`; invalid JSON returns `400`.
 
 ---
 
@@ -355,22 +410,27 @@ VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-GEMINI_MODEL=<primary_gemini_model_name>
-GEMINI_FALLBACK_MODEL=<fallback_gemini_model_name>
+# Optional: override the default Gemini models
+GEMINI_MODEL=
+GEMINI_FALLBACK_MODEL=
 
+PORT=3000
+
+# Dev only. Ignored when NODE_ENV=production
 ALLOW_ANONYMOUS_API=false
 ```
 
-| Variable                    | Required    | Scope           | Purpose                                                                       |
-| --------------------------- | ----------- | --------------- | ----------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`            | Recommended | Server          | Gemini access for OCR and AI research                                         |
-| `APP_URL`                   | Optional    | Server          | Application base URL                                                          |
-| `VITE_SUPABASE_URL`         | Optional    | Client          | Supabase project URL                                                          |
-| `VITE_SUPABASE_ANON_KEY`    | Optional    | Client          | Supabase public auth key                                                      |
-| `SUPABASE_SERVICE_ROLE_KEY` | Optional    | **Server only** | Private DB and storage operations                                             |
-| `GEMINI_MODEL`              | Optional    | Server          | Primary Gemini model                                                          |
-| `GEMINI_FALLBACK_MODEL`     | Optional    | Server          | Used if the primary model fails                                               |
-| `ALLOW_ANONYMOUS_API`       | Optional    | Server          | Allow unauthenticated API access where supported (keep `false` in production) |
+| Variable                    | Required    | Scope           | Purpose                                                                               |
+| --------------------------- | ----------- | --------------- | ------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY`            | Recommended | Server          | Gemini access for OCR and AI research                                                 |
+| `APP_URL`                   | Optional    | Server          | Application base URL                                                                  |
+| `VITE_SUPABASE_URL`         | Optional    | Client          | Supabase project URL                                                                  |
+| `VITE_SUPABASE_ANON_KEY`    | Optional    | Client          | Supabase public auth key                                                              |
+| `SUPABASE_SERVICE_ROLE_KEY` | Optional    | **Server only** | Private DB and storage operations                                                     |
+| `GEMINI_MODEL`              | Optional    | Server          | Primary Gemini model (default: `gemini-3.8-flash`)                                    |
+| `GEMINI_FALLBACK_MODEL`     | Optional    | Server          | Fallback model (default: `gemini-3.1-flash-lite`)                                     |
+| `PORT`                      | Optional    | Server          | Production server port (default `3000`)                                               |
+| `ALLOW_ANONYMOUS_API`       | Optional    | Server          | **Dev only**: allows `/api` calls without sign-in. Ignored when `NODE_ENV=production` |
 
 ### Feature availability by configuration
 
@@ -445,7 +505,7 @@ If Supabase isn't configured, auth-dependent features are disabled while public 
 Pure-logic unit tests use the native Node.js test runner and need **no network access**.
 
 ```bash
-npm run lint      # static checks
+npm run lint      # TypeScript check (tsc --noEmit)
 npm test          # all unit tests
 npm run build     # verify production build
 ```
@@ -472,7 +532,7 @@ npx tsx --test src/utils/*.test.ts
 
 ```bash
 npm run build     # outputs to dist/
-npm start         # production server (serves frontend + /api routes)
+npm start         # runs server.ts (Express): serves dist/ and /api routes
 ```
 
 ### Deploy on Render
@@ -498,7 +558,8 @@ npm start         # production server (serves frontend + /api routes)
 - **Never commit** `.env.local` or any real credentials.
 - **Never expose** `SUPABASE_SERVICE_ROLE_KEY` or `GEMINI_API_KEY` in frontend code. They are server-only.
 - Only the `VITE_`-prefixed public Supabase values belong in browser code.
-- Keep `ALLOW_ANONYMOUS_API=false` in production.
+- Protected API routes verify the Supabase access token server-side; `ALLOW_ANONYMOUS_API` is ignored in production.
+- Upload, OCR and assistant routes are rate-limited per user (in-memory limiter: fine for one Node instance; use Redis/Supabase if you scale to several).
 - Uploads are validated (size, MIME type, metadata, coordinates) before processing.
 - Search and graph text is tokenized in an XSS-safe way; Leaflet popup values are HTML-escaped.
 - The research assistant defends against prompt injection and answers only from retrieved evidence.
@@ -508,16 +569,17 @@ npm start         # production server (serves frontend + /api routes)
 
 ## 🩺 Troubleshooting
 
-| Problem                             | Likely cause / fix                                                                                                          |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `npm install` fails                 | Check Node version (`node -v` must be 20.19+ or 22.12+)                                                                     |
-| Port 3000 in use                    | Stop the other process or change the dev port                                                                               |
-| Login / signup disabled             | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` missing; restart the dev server after editing `.env.local`                   |
-| Google sign-in redirects wrongly    | Check Supabase **Site URL** and **Redirect URLs**                                                                           |
-| OCR or AI assistant not responding  | `GEMINI_API_KEY` missing/invalid, or the model names in `GEMINI_MODEL` / `GEMINI_FALLBACK_MODEL` are not valid for your key |
-| Uploads fail                        | `SUPABASE_SERVICE_ROLE_KEY` missing, or migrations not applied in order                                                     |
-| Search returns nothing              | Apply `schema_step5_search.sql` and confirm documents were ingested                                                         |
-| Works locally, `/api` fails on host | Deployed as a static site; redeploy as a Node web service                                                                   |
+| Problem                             | Likely cause / fix                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm install` fails                 | Check Node version (`node -v` must be 20.19+ or 22.12+)                                                                              |
+| Port 3000 in use                    | Stop the other process or change the dev port                                                                                        |
+| Login / signup disabled             | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` missing; restart the dev server after editing `.env.local`                            |
+| Google sign-in redirects wrongly    | Check Supabase **Site URL** and **Redirect URLs**                                                                                    |
+| OCR or AI assistant not responding  | `GEMINI_API_KEY` missing/invalid, or the default models are not available to your key (set `GEMINI_MODEL` / `GEMINI_FALLBACK_MODEL`) |
+| Uploads fail / 401 error            | Not signed in, `SUPABASE_SERVICE_ROLE_KEY` missing, or migrations not applied in order                                               |
+| 429 / rate limit message            | Per-user hourly limit reached; wait and retry                                                                                        |
+| Search returns nothing              | Apply `schema_step5_search.sql` and confirm documents were ingested                                                                  |
+| Works locally, `/api` fails on host | Deployed as a static site; redeploy as a Node web service                                                                            |
 
 ---
 
