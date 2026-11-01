@@ -1,79 +1,203 @@
-# Virasat 
+# Virasat
 
-> **Every place has a story. Every story deserves to live.**  
-> **Problem Statement:** *Digital Revitalisation of Unstructured Cultural & Architectural Heritage Archives*  
-> **Platform:** React 19, TypeScript, Vite, Tailwind CSS v4, Supabase, Google Gemini 3.8 Flash, Leaflet
+> **Every place has a story. Every story deserves to live.**
+
+<p align="center">
+  <a href="https://hackiitg.onrender.com/">
+    <img src="https://img.shields.io/badge/Live%20Demo-Explore%20Virasat-2ea44f?style=for-the-badge" alt="Live Demo">
+  </a>
+  <a href="https://github.com/bpvankar496-ux/HackIITG">
+    <img src="https://img.shields.io/badge/GitHub-Source%20Code-181717?style=for-the-badge&logo=github" alt="GitHub Repository">
+  </a>
+</p>
+
+<p align="center">
+  <b>Live Website:</b> https://hackiitg.onrender.com/
+  <br/>
+  <b>Source Code:</b> https://github.com/bpvankar496-ux/HackIITG
+</p>
+
+---
+
+## Problem Statement
+
+**Digital Revitalisation of Unstructured Cultural & Architectural Heritage Archives**
+
+## Technology Stack
+
+| Category            | Technologies                 |
+| ------------------- | ---------------------------- |
+| Frontend            | React 19, TypeScript         |
+| Build Tool          | Vite                         |
+| Styling             | Tailwind CSS v4              |
+| Backend             | Node.js, Vite API Middleware |
+| Database            | Supabase PostgreSQL          |
+| Authentication      | Supabase Auth                |
+| AI & OCR            | Google Gemini                |
+| Maps                | Leaflet, OpenStreetMap       |
+| Document Processing | pdf-parse                    |
+| Testing             | Node.js Test Runner, tsx     |
+| Deployment          | Render                       |
 
 ---
 
 ## 1. Project Overview
 
-**Virasat ** is a scholarly digital platform engineered for the revitalisation of unstructured cultural and architectural heritage archives. It transforms fragmented colonial-era survey monographs (such as Dr. James Burgess's *Architectural Surveys of Western India*), ancient Sanskrit stone epigraphs, Persian administrative charters, and unindexed archaeological field notes into a searchable, verified, and AI-grounded living knowledge platform.
+**Virasat** is an AI-powered digital heritage research platform designed to preserve, explore, and revitalise India's cultural and architectural heritage.
+
+It transforms fragmented historical documents, colonial-era survey monographs, ancient Sanskrit inscriptions, Persian administrative charters, and archaeological field notes into a searchable, verified, and interconnected digital knowledge platform.
+
+Through AI-powered document understanding, interactive heritage mapping, archival search, and a historical knowledge graph, Virasat makes cultural heritage more accessible to researchers, historians, students, institutions, and heritage enthusiasts.
 
 ### Core Architectural Pillars
 
-1. **Interactive Heritage Knowledge Graph:** Visual, force-directed simulation network modeling multi-hop relationships across 7 heritage dimensions: Heritage Sites, Royal Patrons, Geographic Places, Historical Dynasties, Architectural Traditions, Documented Events, and Primary Source Charters.
-2. **Authentic Heritage Corpus:** 42 monuments across 14 Indian states with official UNESCO World Heritage and Archaeological Survey of India (ASI) citations, architectural style taxonomy (Māru-Gurjara, Nagara, Dravidian, Indo-Islamic, Kalinga, Nilachal), and site-specific, attributed Wikimedia Commons photography.
-3. **Archival Vault & Deep Passage Search:** Full-text search engine querying historical documents and transcribed folios, extracting exact matching sentence snippets with XSS-safe text tokenization and multi-facet filtering.
-4. **Dual-Path Document Ingestion & Gemini Multi-Modal OCR:**
-   - **Path A (Digital PDFs):** Fast, deterministic extraction of embedded font streams via `pdf-parse` (0.99 confidence).
-   - **Path B (Scanned Manuscripts & Plates):** Visual transcription via Google Gemini (`gemini-3.8-flash`) preserving Sanskrit (Devanagari), Gujarati, Persian, and archaic English orthography with confidence scoring and empty-page detection.
-5. **Grounded AI Heritage Research Assistant:** Server-side RAG pipeline querying indexed folios with strict `[Citation X]` attribution, prompt injection resistance, and an anti-hallucination policy that refuses ungrounded claims.
-6. **Geospatial Heritage Map:** Interactive Leaflet cartography linking monuments to verified GPS coordinates, clustering proximate records, and displaying geolocated survey plates on OpenStreetMap tiles.
-7. **Researcher Authentication:** Dedicated Sign In, Sign Up, and Password Reset screens backed by Supabase Auth with persistent session state and private record bookmarking.
+**1. Interactive Heritage Knowledge Graph**
 
-### Heritage Image Reliability
+A visual, force-directed network that models multi-hop relationships across seven heritage dimensions:
 
-- A single image catalog maps every canonical site slug to one verified monument photograph, descriptive alt text, photographer, licence, and Commons source page.
-- Wikimedia `Special:FilePath` requests bound display images to a practical width while retaining source attribution.
-- Home, Explore, detail, collection, legacy modal, and game views share one image component. A failed remote image is replaced with a category-aware heritage fallback instead of a broken-image icon or collapsed card.
-- Image attribution is available on catalogue cards and in detail captions. See [`src/data/heritageImages.ts`](src/data/heritageImages.ts) for the complete catalog.
+- Heritage Sites
+- Royal Patrons
+- Geographic Places
+- Historical Dynasties
+- Architectural Traditions
+- Documented Events
+- Primary Source Charters
 
-### Performance and Route Handling
+**2. Authentic Heritage Corpus**
 
-- Main application sections are route-lazy-loaded with a loading fallback. The initial JavaScript bundle is approximately 369 kB minified; the optional 3D viewer stays in its own deferred chunk.
-- Hash-based detail routes are held in React state, so **Back to Heritage Archive** reliably returns from `#/heritage/:slug` to `#explore`.
-- Leaflet popup values are HTML-escaped before rendering, including uploaded document metadata.
+- 42 monuments across 14 Indian states.
+- UNESCO World Heritage and Archaeological Survey of India (ASI) references.
+- Architectural style taxonomy including Māru-Gurjara, Nagara, Dravidian, Indo-Islamic, Kalinga, and Nilachal.
+- Site-specific Wikimedia Commons photography with attribution.
+
+**3. Archival Vault & Deep Passage Search**
+
+- Full-text search across historical documents and transcribed folios.
+- Exact matching sentence snippets.
+- Text highlighting and relevance-based ranking.
+- Multi-facet filtering.
+- XSS-safe text tokenization.
+
+**4. Dual-Path Document Ingestion & Multimodal OCR**
+
+Two document processing paths:
+
+- **Path A – Digital PDFs:** Extraction of embedded text using pdf-parse.
+- **Path B – Scanned Manuscripts:** AI-powered visual transcription using Google Gemini.
+
+Supports historical content in:
+
+- Sanskrit (Devanagari)
+- Gujarati
+- Persian
+- Archaic English
+
+Includes confidence scoring, page segmentation, and empty-page detection.
+
+**5. Grounded AI Heritage Research Assistant**
+
+- Retrieval-Augmented Generation (RAG).
+- Indexed archival document retrieval.
+- Citation-based responses using `[Citation X]` references.
+- Prompt injection resistance.
+- Anti-hallucination safeguards.
+- Responses grounded in available archival evidence.
+
+**6. Geospatial Heritage Map**
+
+- Interactive Leaflet mapping.
+- Verified heritage site coordinates.
+- OpenStreetMap integration.
+- Geographic clustering.
+- Geolocated historical survey records.
+
+**7. Researcher Authentication**
+
+- Sign In and Sign Up.
+- Password reset functionality.
+- Supabase authentication.
+- Persistent session management.
+- Personal research collections and saved records.
+- Google OAuth sign-in support when configured.
 
 ---
 
-## 2. Repository Structure
+## 2. Heritage Image Reliability
 
-```
-├── .env.example                     # Environment variables template
-├── README.md                        # Documentation and architecture guide
-├── index.html                       # HTML entry point with fonts & Leaflet styling
-├── metadata.json                    # AI Studio applet capabilities and permissions
-├── package.json                     # Dependencies and test scripts
-├── tsconfig.json                    # TypeScript compiler configuration
-├── vite.config.ts                   # Vite configuration with custom API backend middleware
+Virasat uses a central image catalog to maintain consistent and reliable heritage photography.
+
+Key capabilities:
+
+- A canonical site-slug-based image catalog.
+- Verified monument photographs.
+- Descriptive alternative text.
+- Photographer and licence attribution.
+- Wikimedia Commons source references.
+- Wikimedia `Special:FilePath` image delivery.
+- Category-aware fallback images when remote images fail.
+
+The shared image component is used across homepage, Explore, heritage details, collections, legacy modal, and game views.
+
+See `src/data/heritageImages.ts` for the image catalog and attribution details.
+
+---
+
+## 3. Performance & Route Handling
+
+- Main application sections are lazy-loaded.
+- Loading fallbacks improve navigation experience.
+- Optional 3D viewer functionality is loaded separately.
+- Hash-based detail routes are maintained in React state.
+- Back navigation reliably returns from `#/heritage/:slug` to `#explore`.
+- Leaflet popup values are HTML-escaped before rendering.
+
+---
+
+## 4. Repository Structure
+
+```text
+HackIITG/
+│
+├── .env.example
+├── README.md
+├── index.html
+├── metadata.json
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+├── vite.config.ts
+│
 ├── data/
-│   ├── documents_vault.json         # Pre-seeded authentic historical documents
-│   └── document_pages_vault.json    # Transcribed page folios with provenance
+│   ├── documents_vault.json
+│   └── document_pages_vault.json
+│
 ├── src/
-│   ├── App.tsx                      # Primary router and application state coordinator
-│   ├── main.tsx                     # React 19 root entry point
-│   ├── index.css                    # Tailwind CSS v4 editorial theme and custom scrollbars
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── index.css
+│   │
 │   ├── components/
-│   │   ├── Header.tsx               # Responsive editorial navigation and user menu
-│   │   ├── Footer.tsx               # Academic attribution footer and module links
-│   │   ├── LandingPage.tsx          # Clean 9-section homepage
-│   │   ├── ExploreView.tsx          # Searchable heritage monuments with state filters
-│   │   ├── HeritageDetailView.tsx   # Monument dossier view with 3D status & inscriptions
-│   │   ├── HeritageImage.tsx        # Attributed image renderer with resilient fallback
-│   │   ├── KnowledgeGraphRoute.tsx  # Lazy-loaded graph route and seed-data boundary
-│   │   ├── ArchiveExplorerView.tsx  # Deep passage search and document catalogue
-│   │   ├── DocumentUploadView.tsx   # Document upload form with drag-and-drop & metadata validation
-│   │   ├── DocumentDetailModal.tsx  # Page-by-page folio reader and signed URL generator
-│   │   ├── ResearchAssistantView.tsx# Grounded AI research assistant with citation viewer
-│   │   ├── HeritageMapView.tsx      # Geospatial Leaflet map with coordinate clustering
-│   │   ├── CollectionView.tsx       # Personal research passport and saved records
-│   │   ├── AdminImportView.tsx      # CSV batch ingestion and dataset audit engine
-│   │   ├── ProjectDossier.tsx       # Architecture dossier and Supabase health diagnostics
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   ├── LandingPage.tsx
+│   │   ├── ExploreView.tsx
+│   │   ├── HeritageDetailView.tsx
+│   │   ├── HeritageImage.tsx
+│   │   ├── KnowledgeGraphRoute.tsx
+│   │   ├── ArchiveExplorerView.tsx
+│   │   ├── DocumentUploadView.tsx
+│   │   ├── DocumentDetailModal.tsx
+│   │   ├── ResearchAssistantView.tsx
+│   │   ├── HeritageMapView.tsx
+│   │   ├── CollectionView.tsx
+│   │   ├── AdminImportView.tsx
+│   │   ├── ProjectDossier.tsx
+│   │   │
 │   │   ├── auth/
-│   │   │   ├── LoginView.tsx        # Sign In page with show/hide password and reset flow
-│   │   │   └── SignUpView.tsx       # Registration page with real-time validation
-│   │   └── knowledgeGraph/          # Step 8 Knowledge Graph module
+│   │   │   ├── LoginView.tsx
+│   │   │   └── SignUpView.tsx
+│   │   │
+│   │   └── knowledgeGraph/
 │   │       ├── KnowledgeGraphView.tsx
 │   │       ├── InteractiveGraphCanvas.tsx
 │   │       ├── GraphLegend.tsx
@@ -83,179 +207,551 @@
 │   │       ├── RelationshipDetailsPanel.tsx
 │   │       ├── GraphListView.tsx
 │   │       └── ArchivalExtractionModal.tsx
+│   │
 │   ├── contexts/
-│   │   └── AuthContext.tsx          # Supabase authentication session state provider
+│   │   └── AuthContext.tsx
+│   │
 │   ├── data/
-│   │   ├── authenticHeritageDataset.ts # Canonical 42-site heritage corpus
-│   │   ├── heritageImages.ts        # Verified Commons image catalog and attribution
-│   │   ├── seedHeritageSites.ts     # Seed heritage sites exporter
-│   │   ├── seedKnowledgeGraph.ts    # Seed graph entities and relationships
-│   │   └── archiveData.ts           # Archival document catalogue
+│   │   ├── authenticHeritageDataset.ts
+│   │   ├── heritageImages.ts
+│   │   ├── seedHeritageSites.ts
+│   │   ├── seedKnowledgeGraph.ts
+│   │   └── archiveData.ts
+│   │
 │   ├── lib/
-│   │   ├── supabaseClient.ts        # Browser Supabase client (Anon key only)
-│   │   ├── supabaseAdmin.ts         # Server-only Supabase client (Service role)
-│   │   └── knowledgeGraphExtraction.ts # Deterministic citation & relationship extractor
-│   ├── server/                      # Server-side API services (mounted in Vite middleware)
-│   │   ├── assistantService.ts      # Grounded RAG query processor & Gemini caller
-│   │   ├── documentRepository.ts    # Supabase Storage & document database operations
-│   │   ├── geminiService.ts         # Multi-modal vision OCR service
-│   │   ├── searchRepository.ts      # Full-text passage search engine
-│   │   └── textExtractionEngine.ts  # Dual-path extraction pipeline coordinator
+│   │   ├── supabaseClient.ts
+│   │   ├── supabaseAdmin.ts
+│   │   └── knowledgeGraphExtraction.ts
+│   │
+│   ├── server/
+│   │   ├── assistantService.ts
+│   │   ├── documentRepository.ts
+│   │   ├── geminiService.ts
+│   │   ├── searchRepository.ts
+│   │   └── textExtractionEngine.ts
+│   │
 │   ├── types/
-│   │   ├── database.types.ts        # Document and page schema types
-│   │   ├── heritage.ts              # Heritage site and import batch types
-│   │   ├── knowledgeGraph.ts        # Knowledge graph entities, edges, and filter types
-│   │   └── index.ts                 # Shared domain models
+│   │   ├── database.types.ts
+│   │   ├── heritage.ts
+│   │   ├── knowledgeGraph.ts
+│   │   └── index.ts
+│   │
 │   └── utils/
-│       ├── archiveSearch.ts         # Passage ranking, snippet extraction, and text highlighting
-│       ├── archiveSearch.test.ts    # Search logic unit tests
-│       ├── graphLogic.ts            # Graph filtering, search, and neighborhood traversal
-│       ├── graphLogic.test.ts       # Graph logic unit tests
-│       ├── heritageDataImporter.ts  # CSV batch validation and slug normalization
-│       ├── heritageDataImporter.test.ts # Data importer unit tests
-│       ├── heritageLogic.ts         # Haversine coordinate math and text chunking
-│       ├── heritageLogic.test.ts    # Heritage logic unit tests
-│       ├── heritageMap.ts           # Coordinate validation and geographic bounding boxes
-│       ├── heritageMap.test.ts      # Map logic unit tests
-│       ├── ocrPipeline.ts           # Extraction route determination and text sanitization
-│       ├── ocrPipeline.test.ts      # OCR pipeline unit tests
-│       ├── researchAssistant.ts     # Prompt construction, injection defense, and citation extraction
-│       ├── researchAssistant.test.ts# Assistant unit tests
-│       ├── uploadValidation.ts      # File MIME, size, and metadata validation
-│       └── uploadValidation.test.ts # Upload validation unit tests
+│       ├── archiveSearch.ts
+│       ├── archiveSearch.test.ts
+│       ├── graphLogic.ts
+│       ├── graphLogic.test.ts
+│       ├── heritageDataImporter.ts
+│       ├── heritageDataImporter.test.ts
+│       ├── heritageLogic.ts
+│       ├── heritageLogic.test.ts
+│       ├── heritageMap.ts
+│       ├── heritageMap.test.ts
+│       ├── ocrPipeline.ts
+│       ├── ocrPipeline.test.ts
+│       ├── researchAssistant.ts
+│       ├── researchAssistant.test.ts
+│       ├── uploadValidation.ts
+│       └── uploadValidation.test.ts
+│
 └── supabase/
-    ├── schema.sql                   # Core heritage schema and RLS policies
-    ├── knowledge_graph.sql          # Step 8 Knowledge Graph tables and seed epigraphs
-    ├── schema_step2_documents.sql   # Document metadata schema and private storage policies
-    ├── schema_step4_document_pages.sql # Document pages schema with idempotent unique constraints
-    └── schema_step5_search.sql      # PostgreSQL FTS stored procedure and GIN indexes
+    ├── schema.sql
+    ├── knowledge_graph.sql
+    ├── schema_step2_documents.sql
+    ├── schema_step4_document_pages.sql
+    └── schema_step5_search.sql
 ```
 
 ---
 
-## 3. Environment Variables
+## 5. Getting Started – Local Installation
 
-Create a local environment configuration file by copying `.env.example`:
-
-```bash
-cp .env.example .env.local
-```
-
-Configure the following variables in `.env.local`:
-
-| Variable | Required | Scope | Purpose |
-| :--- | :---: | :---: | :--- |
-| `GEMINI_API_KEY` | Recommended | Server | Google Gemini API key used by the multi-modal OCR pipeline and the grounded AI research assistant. |
-| `APP_URL` | Optional | Server | Canonical base URL of the deployment (defaults to `http://localhost:3000`). |
-| `VITE_SUPABASE_URL` | Optional | Client | Supabase project URL for database queries and user authentication. |
-| `VITE_SUPABASE_ANON_KEY` | Optional | Client | Supabase publishable anonymous key for browser authentication and public reads. |
-| `GEMINI_MODEL` / `GEMINI_FALLBACK_MODEL` | Optional | Server | Override the Gemini model names (defaults: `gemini-3.8-flash`, `gemini-3.1-flash-lite`). Set these if your key cannot use the defaults. |
-| `ALLOW_ANONYMOUS_API` | Optional | Server | `true` lets `/api` calls run without signing in. Development only; ignored in production. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Optional | Server | Supabase service-role secret key. **Never exposed to the client.** Used by the backend API for private storage uploads and signed URLs. |
-
-> **Note on Offline Operation:** The application includes self-contained, deterministic fallback vaults in `/data/` and robust fallback synthesizers. If Supabase or Gemini keys are not configured, all public heritage browsing, Knowledge Graph exploration, document viewing, and full-text search continue to function locally without crashing.
-
----
-
-## 4. Local Development Quickstart
+Follow these steps to download, configure, and run Virasat on your local machine.
 
 ### Prerequisites
-- Node.js 18.x or 20.x
-- npm 9+ or 10+ (or Bun)
 
-### Installation & Run
+Make sure you have the following installed:
+
+| Requirement | Version               |
+| ----------- | --------------------- |
+| Node.js     | 20.19+ or 22.12+      |
+| npm         | 9+                    |
+| Git         | Latest stable version |
+| Code Editor | VS Code recommended   |
+
+You can verify your installations using:
 
 ```bash
-# 1. Clone the repository
+node -v
+npm -v
+git --version
+```
+
+### Step 1 – Clone the Repository
+
+Open your terminal and execute:
+
+```bash
 git clone https://github.com/bpvankar496-ux/HackIITG.git
+```
+
+Navigate into the project directory:
+
+```bash
 cd HackIITG
+```
 
-# 2. Install dependencies
+### Step 2 – Install Dependencies
+
+Install all required packages:
+
+```bash
 npm install
+```
 
-# 3. Configure environment variables
+This installs the dependencies defined in `package.json` and generates the required `node_modules` directory.
+
+### Step 3 – Configure Environment Variables
+
+Create your local environment configuration file:
+
+```bash
 cp .env.example .env.local
+```
 
-# 4. Run automated test suites
+Open `.env.local` and configure the required API credentials.
+
+### Step 4 – Configure Supabase and Gemini
+
+Add the appropriate credentials to `.env.local`:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+
+APP_URL=http://localhost:3000
+
+VITE_SUPABASE_URL=your_supabase_project_url
+
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+GEMINI_MODEL=gemini-3.8-flash
+
+GEMINI_FALLBACK_MODEL=gemini-3.1-flash-lite
+
+ALLOW_ANONYMOUS_API=false
+```
+
+Replace the example values with your actual credentials.
+
+**Important:**
+
+- Never commit `.env.local` to GitHub.
+- Never expose `SUPABASE_SERVICE_ROLE_KEY` in frontend code.
+- Only use public Supabase credentials in browser-side code.
+- Keep your Gemini API key on the server.
+- Do not share private API credentials.
+
+### Step 5 – Run Automated Tests
+
+Before starting the application, run the test suites:
+
+```bash
 npm test
-
-# 5. Start development server
-npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Production build
+Alternatively, execute the test files directly:
 
 ```bash
-npm run build   # builds the front end into dist/
-npm start       # serves dist/ and the /api routes from server.ts
-```
-
-The `/api` routes (upload, OCR, assistant, search) need a host that runs Node, such as Render, Railway or Fly.io. A static-only host serves the pages but cannot run them. Public document, map, and search reads are available without authentication; uploads, OCR, signed URLs, and assistant requests require a signed-in Supabase user.
-
----
-
-## 5. Automated Unit Tests
-
-The codebase includes 53 pure-logic unit tests executing via the native `node:test` runner. All tests run in complete isolation without external network dependencies:
-
-```bash
-# Execute all test suites
 npx tsx --test src/utils/*.test.ts
 ```
 
-### Test Coverage Highlights
-- **`graphLogic.test.ts` (7 tests):** Entity search, referential integrity filtering, 1-hop neighborhood calculation, duplicate extraction prevention, in-situ epigraph vs. AI confidence categorization, and zero orphaned edges verification.
-- **`heritageDataImporter.test.ts` (8 tests):** Slug normalization, schema validation of all 42 records, image attribution and uniqueness checks, coordinate boundaries, and idempotent batch ingestion.
-- **`heritageLogic.test.ts` (4 tests):** Haversine GPS distance math, geofencing threshold verification, multi-token text filtering, and OCR passage chunking.
-- **`heritageMap.test.ts` (7 tests):** Coordinate boundaries, cardinal notation formatting, partition of mapped vs. unmapped records, co-located marker clustering, and geographic bounding boxes.
-- **`ocrPipeline.test.ts` (9 tests):** MIME routing, digital PDF vs. visual scan detection, Unicode sanitization, multilingual word counts, degraded scan review flags, and page segmentation.
-- **`researchAssistant.test.ts` (6 tests):** Inquiry length validation, prompt injection defense, bracket token extraction (`[Citation X]`), and grounded fallback synthesis.
-- **`uploadValidation.test.ts` (7 tests):** File size limits (20MB), MIME enforcement, metadata validation, coordinate range checks, and collision-resistant path generation.
+### Step 6 – Start the Development Server
 
-### Verification Commands
+Run:
 
 ```bash
-npm run lint
-npm test
+npm run dev
+```
+
+The application will start on:
+
+```text
+http://localhost:3000
+```
+
+Open the URL in your browser to explore Virasat locally.
+
+---
+
+## 6. Environment Variables
+
+| Variable                    | Required    | Scope  | Purpose                                       |
+| --------------------------- | ----------- | ------ | --------------------------------------------- |
+| `GEMINI_API_KEY`            | Recommended | Server | Gemini API access for OCR and AI research     |
+| `APP_URL`                   | Optional    | Server | Application base URL                          |
+| `VITE_SUPABASE_URL`         | Optional    | Client | Supabase project URL                          |
+| `VITE_SUPABASE_ANON_KEY`    | Optional    | Client | Supabase public authentication key            |
+| `GEMINI_MODEL`              | Optional    | Server | Primary Gemini model                          |
+| `GEMINI_FALLBACK_MODEL`     | Optional    | Server | Fallback Gemini model                         |
+| `ALLOW_ANONYMOUS_API`       | Optional    | Server | Controls anonymous API access where supported |
+| `SUPABASE_SERVICE_ROLE_KEY` | Optional    | Server | Private database and storage operations       |
+
+### Offline & Fallback Operation
+
+Virasat includes local fallback data and deterministic processing paths.
+
+When external credentials are unavailable:
+
+- Public heritage browsing can continue.
+- Knowledge Graph exploration can use available seed data.
+- Local archival data can remain accessible.
+- Local search functionality can use the available fallback dataset.
+
+However, features that depend on external services, such as Gemini OCR, authenticated uploads, private storage, and AI research requests, require their respective configurations.
+
+---
+
+## 7. Production Build & Deployment
+
+### Create a Production Build
+
+Run:
+
+```bash
 npm run build
 ```
 
-The production build emits a size warning for the optional Three.js 3D viewer chunk. It is loaded only when a visitor opens the 3D section of a heritage detail page.
+The production frontend is generated in:
+
+```text
+dist/
+```
+
+### Run the Production Server
+
+If the configured production server script is available:
+
+```bash
+npm start
+```
+
+The production server must serve the frontend and support the backend `/api` routes.
+
+### Deployment on Render
+
+Virasat is deployed here:
+
+**Live Application:** https://hackiitg.onrender.com/
+
+**GitHub Repository:** https://github.com/bpvankar496-ux/HackIITG
+
+The application requires a Node.js-compatible hosting environment for server-side functionality.
+
+Recommended deployment configuration:
+
+| Setting          | Value                                      |
+| ---------------- | ------------------------------------------ |
+| Hosting Platform | Render                                     |
+| Runtime          | Node.js                                    |
+| Build Command    | `npm install && npm run build`             |
+| Start Command    | `npm start`                                |
+| Environment      | Configure production environment variables |
+
+Make sure all required environment variables are configured in your Render service settings.
+
+**Deployment Note:** A static-only hosting platform can serve the frontend, but cannot independently execute the Node.js API routes required for OCR, document uploads, signed URLs, and the AI research assistant.
 
 ---
 
-## 6. Database Migrations (Supabase PostgreSQL)
+## 8. Automated Unit Testing
 
-Database schemas and Row Level Security (RLS) policies are codified under `/supabase/`:
+The project includes pure-logic unit tests using the native Node.js test runner.
 
-1. **`supabase/schema.sql`:** Base tables (`heritage_sites`, `heritage_media`, `saved_heritage`) and public read policies.
-2. **`supabase/knowledge_graph.sql`:** Knowledge graph tables (`heritage_entities`, `heritage_relationships`, `heritage_evidence`) and primary inscriptional seed records.
-3. **`supabase/schema_step2_documents.sql`:** Metadata table (`public.documents`), coordinate constraints, `tsvector` generated column, and private storage bucket policies for `historical_archives`.
-4. **`supabase/schema_step4_document_pages.sql`:** Page-level provenance schema (`public.document_pages`) with unique constraint on `(document_id, page_number)`.
-5. **`supabase/schema_step5_search.sql`:** Stored procedure `search_archive_passages` with GIN indexing, `ts_headline` generation, and `ts_rank_cd` relevance ranking.
+Tests execute independently without requiring external network connections.
 
-To apply migrations on an external Supabase database:
+### Test Coverage
+
+| Test File                      | Coverage                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| `graphLogic.test.ts`           | Entity search, relationships, neighborhood traversal, duplicate prevention       |
+| `heritageDataImporter.test.ts` | Slug normalization, dataset validation, image attribution, coordinate validation |
+| `heritageLogic.test.ts`        | Haversine distance, geofencing, text filtering, OCR chunking                     |
+| `heritageMap.test.ts`          | Coordinate validation, clustering, geographic bounding boxes                     |
+| `ocrPipeline.test.ts`          | PDF routing, scan detection, Unicode sanitization, page segmentation             |
+| `researchAssistant.test.ts`    | Prompt injection defense, citation extraction, grounded responses                |
+| `uploadValidation.test.ts`     | File size, MIME validation, metadata validation, coordinate checks               |
+
+### Verification Commands
+
+Run the following commands:
+
 ```bash
-psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema.sql
-psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/knowledge_graph.sql
-psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema_step2_documents.sql
-psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema_step4_document_pages.sql
-psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema_step5_search.sql
+npm run lint
+```
+
+```bash
+npm test
+```
+
+```bash
+npm run build
+```
+
+You can also run the test suites directly:
+
+```bash
+npx tsx --test src/utils/*.test.ts
 ```
 
 ---
 
-## 7. License & Academic Attribution
+## 9. Database Architecture & Supabase Migrations
 
-- **Cultural Data & Provenance:** Published under the [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/) license.
-- **Archival Citations:** Primary archaeological monographs and epigraphical records are sourced from public domain collections of the Archaeological Survey of India (ASI), Epigraphia Indica, and UNESCO World Heritage nomination dossiers.
+Virasat uses Supabase PostgreSQL for structured heritage records, document metadata, archival pages, and researcher collections.
 
-## Access model & Google sign-in
+Database schemas and Row Level Security (RLS) policies are maintained in the `supabase/` directory.
 
-- Public: landing page, Log In, Sign Up. Every other page redirects to Log In until the visitor is signed in, then returns them to the page they picked. (If `VITE_SUPABASE_URL` is not set, accounts are disabled and nothing is locked.)
-- "Continue with Google" uses Supabase OAuth. One-time setup:
-  1. Google Cloud Console → APIs & Services → Credentials → create an OAuth client (Web). Authorized redirect URI: `https://<your-project>.supabase.co/auth/v1/callback`.
-  2. Supabase → Authentication → Providers → Google → enable, paste Client ID and Secret.
-  3. Supabase → Authentication → URL Configuration → Site URL `https://hackiitg.onrender.com`; add `https://hackiitg.onrender.com/**` and `http://localhost:3000/**` to Redirect URLs.
+### Database Migration Files
+
+| Migration                         | Description                                                              |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `schema.sql`                      | Base heritage tables, media, saved records, and public read policies     |
+| `knowledge_graph.sql`             | Heritage entities, relationships, and evidence tables                    |
+| `schema_step2_documents.sql`      | Document metadata, coordinates, full-text indexing, and storage policies |
+| `schema_step4_document_pages.sql` | Page-level provenance and unique document-page constraints               |
+| `schema_step5_search.sql`         | PostgreSQL full-text search, GIN indexes, and passage ranking            |
+
+### Applying Database Migrations
+
+Configure your Supabase PostgreSQL connection and apply the migrations in the following order:
+
+```bash
+psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema.sql
+```
+
+```bash
+psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/knowledge_graph.sql
+```
+
+```bash
+psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema_step2_documents.sql
+```
+
+```bash
+psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema_step4_document_pages.sql
+```
+
+```bash
+psql -h <SUPABASE_HOST> -U postgres -d postgres -f supabase/schema_step5_search.sql
+```
+
+Replace `<SUPABASE_HOST>` with your actual database hostname.
+
+Alternatively, execute the SQL migration files through the Supabase SQL Editor in the same order.
+
+---
+
+## 10. Authentication & Google Sign-In
+
+Virasat supports researcher authentication through Supabase Auth.
+
+### Available Authentication Features
+
+- Sign In
+- Sign Up
+- Password Reset
+- Google OAuth
+- Persistent authentication sessions
+- Private researcher collections
+
+### Supabase Configuration
+
+1. Create a Supabase project.
+2. Navigate to Project Settings and obtain your project URL and public key.
+3. Add the credentials to `.env.local`.
+4. Apply the database migrations.
+5. Configure the authentication providers.
+
+### Google OAuth Setup
+
+**Step 1 – Google Cloud Console**
+
+Open Google Cloud Console:
+
+https://console.cloud.google.com/
+
+Navigate to:
+
+APIs & Services → Credentials → Create Credentials → OAuth Client ID.
+
+Choose Web Application.
+
+Add the following authorized redirect URI:
+
+```text
+https://<your-project>.supabase.co/auth/v1/callback
+```
+
+**Step 2 – Supabase Authentication**
+
+Open your Supabase project.
+
+Navigate to:
+
+Authentication → Providers → Google.
+
+Enable Google authentication and enter your Google OAuth Client ID and Client Secret.
+
+**Step 3 – Configure Redirect URLs**
+
+Navigate to:
+
+Authentication → URL Configuration.
+
+Set the Site URL:
+
+```text
+https://hackiitg.onrender.com
+```
+
+Add the following Redirect URLs:
+
+```text
+https://hackiitg.onrender.com/**
+```
+
+```text
+http://localhost:3000/**
+```
+
+Save the configuration.
+
+### Access Model
+
+The application supports public heritage exploration and researcher authentication.
+
+Private operations, including document uploads, OCR processing, signed URLs, and authenticated research requests, require appropriate authentication and server-side credentials.
+
+If Supabase is not configured, authentication-dependent functionality may be disabled.
+
+---
+
+## 11. AI & Document Processing Architecture
+
+Virasat integrates Google Gemini for multimodal document understanding and archival research.
+
+### Document Processing Pipeline
+
+```text
+             Document Upload
+                    |
+                    v
+           File Type Detection
+                    |
+          +---------+---------+
+          |                   |
+          v                   v
+      Digital PDF        Scanned Document
+          |                   |
+          v                   v
+      pdf-parse          Google Gemini
+          |                Vision OCR
+          |                   |
+          +---------+---------+
+                    |
+                    v
+            Extracted Text
+                    |
+                    v
+          Text Sanitization
+                    |
+                    v
+           Page Segmentation
+                    |
+                    v
+          Archival Indexing
+                    |
+                    v
+          Full-Text Search
+                    |
+                    v
+         AI Research Assistant
+                    |
+                    v
+         Citation-Based Results
+```
+
+### AI Research Assistant
+
+The research assistant follows a retrieval-grounded approach:
+
+1. Accept a research question.
+2. Retrieve relevant archival passages.
+3. Construct a context-grounded prompt.
+4. Generate a response using Gemini.
+5. Extract citation references.
+6. Return evidence-supported results.
+
+The system includes safeguards against prompt injection and unsupported historical claims.
+
+---
+
+## 12. Future Scope
+
+Potential future enhancements include:
+
+- Expanded heritage datasets covering more Indian states.
+- Advanced 3D reconstruction of historical monuments.
+- More multilingual archival transcription.
+- Additional manuscript digitisation workflows.
+- Improved historical relationship discovery.
+- More institutional archival integrations.
+- Advanced heritage discovery and educational experiences.
+
+---
+
+## 13. License & Academic Attribution
+
+### Cultural Data & Provenance
+
+Cultural data and associated project materials are attributed to their respective sources.
+
+The project documentation identifies Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) as the applicable licence for the covered material.
+
+https://creativecommons.org/licenses/by-sa/4.0/
+
+### Archival Sources
+
+Historical and archaeological references include publicly available resources from:
+
+- Archaeological Survey of India (ASI)
+- UNESCO World Heritage documentation
+- Epigraphia Indica
+- Public-domain historical monographs and archival collections
+- Wikimedia Commons
+
+Photographs and third-party materials retain their respective source attribution and licensing requirements.
+
+---
+
+## 14. Project Links
+
+<p align="center">
+  <a href="https://hackiitg.onrender.com/">
+    <b>🌐 Explore Live Website</b>
+  </a>
+  &nbsp; | &nbsp;
+  <a href="https://github.com/bpvankar496-ux/HackIITG">
+    <b>💻 View Source Code</b>
+  </a>
+</p>
+
+---
+
+<p align="center">
+  <b>Virasat – Preserving the Past, Connecting the Present, Inspiring the Future.</b>
+  <br/>
+  Made with the vision of making India's cultural heritage accessible to everyone.
+</p>
